@@ -1,51 +1,48 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { RowDataPacket } from 'mysql2';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
     try {
         const { certificateId } = await req.json();
 
-        const [rows] = await pool.query<RowDataPacket[]>(
-            `SELECT 
-        c.certificate_id, 
-        c.issue_date, 
-        c.expiry_date, 
-        c.status, 
-        c.revocation_reason,
-        c.data_hash,
-        c.qr_code,
-        p.full_name, 
-        p.email,
-        t.title as template_name
-       FROM certificates c 
-       JOIN profiles p ON c.user_id = p.id 
-       LEFT JOIN templates t ON c.template_id = t.id
-       WHERE c.certificate_id = ?`,
-            [certificateId]
-        );
+        const { data: certData, error } = await supabase
+            .from('certificates')
+            .select(`
+                certificate_id,
+                issue_date,
+                expiry_date,
+                status,
+                revocation_reason,
+                data_hash,
+                qr_code,
+                profiles (
+                    full_name,
+                    email
+                ),
+                templates (
+                    title
+                )
+            `)
+            .eq('certificate_id', certificateId)
+            .single();
 
-        const data = rows[0];
-
-        if (!data) {
+        if (error || !certData) {
+            console.error('Fetch error:', error);
             return NextResponse.json({ valid: false, error: 'Certificate not found' });
         }
 
         return NextResponse.json({
-            valid: data.status === 'valid',
-            status: data.status,
-            revocation_reason: data.revocation_reason,
+            valid: certData.status === 'valid',
+            status: certData.status,
+            revocation_reason: certData.revocation_reason,
             data: {
-                certificate_id: data.certificate_id,
-                issue_date: data.issue_date,
-                expiry_date: data.expiry_date,
-                qr_code: data.qr_code,
-                data_hash: data.data_hash,
-                profiles: {
-                    full_name: data.full_name,
-                    email: data.email
-                },
-                template_name: data.template_name
+                certificate_id: certData.certificate_id,
+                issue_date: certData.issue_date,
+                expiry_date: certData.expiry_date,
+                qr_code: certData.qr_code,
+                data_hash: certData.data_hash,
+                profiles: certData.profiles,
+                template_name: certData.templates ? (certData.templates as any).title : 'Standard Certificate'
             }
         });
     } catch (error) {

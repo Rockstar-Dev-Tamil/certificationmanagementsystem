@@ -1,5 +1,4 @@
-import pool from '@/lib/db';
-import { RowDataPacket } from 'mysql2';
+import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
@@ -11,9 +10,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
  */
 export async function checkRole(userId: string, allowedRoles: string[]) {
     try {
-        const [rows] = await pool.query<RowDataPacket[]>('SELECT role FROM profiles WHERE id = ?', [userId]);
-        if (rows.length === 0) return false;
-        return allowedRoles.includes(rows[0].role);
+        const { data, error } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+        if (error || !data) return false;
+        return allowedRoles.includes(data.role);
     } catch (err) {
         console.error('RBAC Error:', err);
         return false;
@@ -33,14 +37,19 @@ export async function signAndCommitToChain(certificateId: string, dataHash: stri
             .digest('hex');
 
         // Record in the audit ledger
-        await pool.query(
-            'INSERT INTO audit_logs (action, target_id, details) VALUES (?, ?, ?)',
-            ['BLOCKCHAIN_COMMIT_SIM', certificateId, JSON.stringify({
-                tx_hash: crypto.randomBytes(32).toString('hex'),
-                signing_signature: signature,
-                network: 'CertiSafe-L2-Simulated'
-            })]
-        );
+        const { error } = await supabase
+            .from('audit_logs')
+            .insert([{
+                action: 'BLOCKCHAIN_COMMIT_SIM',
+                target_id: certificateId,
+                details: JSON.stringify({
+                    tx_hash: crypto.randomBytes(32).toString('hex'),
+                    signing_signature: signature,
+                    network: 'CertiSafe-L2-Simulated'
+                })
+            }]);
+
+        if (error) throw error;
 
         return signature;
     } catch (err) {

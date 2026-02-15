@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
-import pool from '@/lib/db';
-import { ResultSetHeader, RowDataPacket } from 'mysql2';
+import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { signAndCommitToChain } from '@/lib/security';
@@ -17,24 +16,47 @@ export async function POST(req: Request) {
 
         // 1. Find or Create Profile
         let userId;
-        const [existingUsers] = await pool.query<RowDataPacket[]>('SELECT id FROM profiles WHERE email = ?', [recipient_email]);
+        const { data: existingProfiles, error: profileFetchError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', recipient_email)
+            .limit(1);
 
-        if (existingUsers.length > 0) {
-            userId = existingUsers[0].id;
+        if (profileFetchError) throw profileFetchError;
+
+        if (existingProfiles && existingProfiles.length > 0) {
+            userId = existingProfiles[0].id;
         } else {
             userId = uuidv4();
-            await pool.query('INSERT INTO profiles (id, full_name, email) VALUES (?, ?, ?)', [userId, recipient_name, recipient_email]);
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert([{ id: userId, full_name: recipient_name, email: recipient_email }]);
+            if (profileError) throw profileError;
         }
 
         // 2. Find or Create Template
         let templateId;
-        const [existingTemplates] = await pool.query<RowDataPacket[]>('SELECT id FROM templates WHERE title = ?', [course_title]);
+        const { data: existingTemplates, error: templateFetchError } = await supabase
+            .from('templates')
+            .select('id')
+            .eq('title', course_title)
+            .limit(1);
 
-        if (existingTemplates.length > 0) {
+        if (templateFetchError) throw templateFetchError;
+
+        if (existingTemplates && existingTemplates.length > 0) {
             templateId = existingTemplates[0].id;
         } else {
             templateId = uuidv4();
-            await pool.query('INSERT INTO templates (id, institution_id, title, description) VALUES (?, ?, ?, ?)', [templateId, institution_id || null, course_title, 'Auto-generated template']);
+            const { error: templateError } = await supabase
+                .from('templates')
+                .insert([{
+                    id: templateId,
+                    institution_id: institution_id || null,
+                    title: course_title,
+                    description: 'Auto-generated template'
+                }]);
+            if (templateError) throw templateError;
         }
 
         // 3. Generate Professional Certificate ID
@@ -56,15 +78,26 @@ export async function POST(req: Request) {
             .digest('hex');
 
         // 5. Generate QR Code
-        const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/verify?id=${certificate_id}`;
+        const liveBase = 'https://certificationmanagementsystem-nine.vercel.app';
+        const verificationUrl = `${liveBase}/verify?id=${certificate_id}`;
         const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl);
 
         // 6. Insert Certificate
-        const [result] = await pool.query<ResultSetHeader>(
-            `INSERT INTO certificates (id, certificate_id, user_id, template_id, institution_id, expiry_date, qr_code, data_hash, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'valid')`,
-            [uuidv4(), certificate_id, userId, templateId, institution_id || null, expiry_date || null, qrCodeDataUrl, data_hash]
-        );
+        const { error: certError } = await supabase
+            .from('certificates')
+            .insert([{
+                id: uuidv4(),
+                certificate_id,
+                user_id: userId,
+                template_id: templateId,
+                institution_id: institution_id || null,
+                expiry_date: expiry_date || null,
+                qr_code: qrCodeDataUrl,
+                data_hash,
+                status: 'valid'
+            }]);
+
+        if (certError) throw certError;
 
         // 7. Blockchain Simulation Commit
         await signAndCommitToChain(certificate_id, data_hash);
@@ -75,14 +108,10 @@ export async function POST(req: Request) {
         });
 
     } catch (err: any) {
-        console.error('Database error:', err);
+        console.error('Supabase error:', err);
 
         let errorMessage = 'An unexpected error occurred during issuance.';
-        if (err.code === 'ECONNREFUSED') {
-            errorMessage = 'Database Connection Refused. Please ensure your MySQL server is running and accessible.';
-        } else if (err.code === 'ER_ACCESS_DENIED_ERROR') {
-            errorMessage = 'Database Access Denied. Please check your credentials.';
-        } else if (err.message) {
+        if (err.message) {
             errorMessage = err.message;
         }
 

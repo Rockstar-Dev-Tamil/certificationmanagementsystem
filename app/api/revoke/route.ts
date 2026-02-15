@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { ResultSetHeader } from 'mysql2';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
     try {
@@ -10,22 +9,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing certificateId' }, { status: 400 });
         }
 
-        const [result] = await pool.query<ResultSetHeader>(
-            `UPDATE certificates 
-             SET status = 'revoked', revocation_reason = ? 
-             WHERE certificate_id = ?`,
-            [reason || 'No reason provided', certificateId]
-        );
+        const { data, error: updateError } = await supabase
+            .from('certificates')
+            .update({
+                status: 'revoked',
+                revocation_reason: reason || 'No reason provided'
+            })
+            .eq('certificate_id', certificateId)
+            .select();
 
-        if (result.affectedRows === 0) {
+        if (updateError || !data || data.length === 0) {
             return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
         }
 
-        // Log the action
-        await pool.query(
-            'INSERT INTO audit_logs (action, target_id, details) VALUES (?, ?, ?)',
-            ['REVOKE_CERTIFICATE', certificateId, reason]
-        );
+        // Log the action in audit_logs
+        await supabase
+            .from('audit_logs')
+            .insert([{
+                action: 'REVOKE_CERTIFICATE',
+                target_id: certificateId,
+                details: reason || 'Protocol revocation triggered'
+            }]);
 
         return NextResponse.json({ success: true, message: 'Certificate revoked successfully' });
 

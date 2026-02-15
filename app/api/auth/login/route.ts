@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
@@ -14,10 +14,13 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
         }
 
-        const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-        const user = (users as any[])[0];
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .single();
 
-        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+        if (error || !user || !(await bcrypt.compare(password, user.password_hash))) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 

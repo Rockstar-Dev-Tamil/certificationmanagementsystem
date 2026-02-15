@@ -1,29 +1,45 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { ResultSetHeader } from 'mysql2';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
     try {
-        const [result] = await pool.query<ResultSetHeader>(
-            `UPDATE certificates 
-             SET status = 'expired' 
-             WHERE expiry_date IS NOT NULL 
-             AND expiry_date < CURRENT_TIMESTAMP 
-             AND status = 'valid'`
-        );
+        const now = new Date().toISOString();
 
-        // Log the auto-cleanup
-        if (result.affectedRows > 0) {
-            console.log(`[Auto-Expiry] ${result.affectedRows} certificates marked as expired.`);
-            await pool.query(
-                'INSERT INTO audit_logs (action, details) VALUES (?, ?)',
-                ['AUTO_EXPIRY_ENGINE', `${result.affectedRows} certificates expired automatically.`]
-            );
+        // Find certificates that have expired
+        const { data: expiredCerts, error: fetchError } = await supabase
+            .from('certificates')
+            .select('id, certificate_id')
+            .lt('expiry_date', now)
+            .eq('status', 'valid');
+
+        if (fetchError) throw fetchError;
+
+        const count = expiredCerts?.length || 0;
+
+        if (count > 0) {
+            // Update them to 'expired'
+            const ids = expiredCerts.map(c => c.id);
+            const { error: updateError } = await supabase
+                .from('certificates')
+                .update({ status: 'expired' })
+                .in('id', ids);
+
+            if (updateError) throw updateError;
+
+            console.log(`[Auto-Expiry] ${count} certificates marked as expired.`);
+
+            // Log the auto-cleanup
+            await supabase
+                .from('audit_logs')
+                .insert([{
+                    action: 'AUTO_EXPIRY_ENGINE',
+                    details: `${count} certificates expired automatically.`
+                }]);
         }
 
         return NextResponse.json({
             success: true,
-            expired_count: result.affectedRows
+            expired_count: count
         });
     } catch (err: any) {
         console.error('Auto-expiry error:', err);

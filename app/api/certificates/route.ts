@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { RowDataPacket } from 'mysql2';
-
+import { supabase } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/security';
 
 export async function GET(req: Request) {
@@ -11,33 +9,37 @@ export async function GET(req: Request) {
     }
 
     try {
-        // If user is admin, they can see all or filter. If not, they only see their own.
         const url = new URL(req.url);
         const userId = user.role === 'admin' ? url.searchParams.get('userId') : user.userId;
 
-        let query = `
-      SELECT c.certificate_id, c.issue_date, c.expiry_date, c.status, t.title
-      FROM certificates c
-      LEFT JOIN templates t ON c.template_id = t.id
-    `;
-        const params: any[] = [];
+        let query = supabase
+            .from('certificates')
+            .select(`
+                certificate_id,
+                issue_date,
+                expiry_date,
+                status,
+                templates (
+                    title
+                )
+            `)
+            .order('issue_date', { ascending: false });
 
         if (userId) {
-            query += ' WHERE c.user_id = ?';
-            params.push(userId);
+            query = query.eq('user_id', userId);
         }
 
-        query += ' ORDER BY c.issue_date DESC';
+        const { data: rows, error } = await query;
 
-        const [rows] = await pool.query<RowDataPacket[]>(query, params);
+        if (error) throw error;
 
         // Transform for frontend
         const certificates = rows.map((row) => ({
             id: row.certificate_id,
-            title: row.title || 'Certificate',
+            title: row.templates ? (row.templates as any).title : 'Certificate',
             date: new Date(row.issue_date).toLocaleDateString(),
             expiry: row.expiry_date ? new Date(row.expiry_date).toLocaleDateString() : 'N/A',
-            recipient: 'You', // Placeholder since auth is removed
+            recipient: user.role === 'admin' ? 'Recipient' : 'You',
         }));
 
         return NextResponse.json(certificates);

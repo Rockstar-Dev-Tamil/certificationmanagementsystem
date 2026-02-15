@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { RowDataPacket } from 'mysql2';
-
+import { supabase } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/security';
 
 export async function GET() {
@@ -11,35 +9,76 @@ export async function GET() {
     }
 
     try {
-        const [totalCertificates] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as count FROM certificates');
-        const [issuedToday] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as count FROM certificates WHERE DATE(issue_date) = CURDATE()');
+        // 1. Total certificates
+        const { count: total, error: countError } = await supabase
+            .from('certificates')
+            .select('*', { count: 'exact', head: true });
 
-        // Recent 5 certificates
-        const [recent] = await pool.query<RowDataPacket[]>(
-            `SELECT c.id, c.certificate_id, c.issue_date, c.status, p.full_name, t.title as template_name
-       FROM certificates c
-       LEFT JOIN profiles p ON c.user_id = p.id
-       LEFT JOIN templates t ON c.template_id = t.id
-       ORDER BY c.created_at DESC LIMIT 5`
-        );
+        if (countError) throw countError;
 
-        // 4. Fetch Trend Data (Last 7 days)
-        const [trend] = await pool.query<RowDataPacket[]>(
-            `SELECT DATE(issue_date) as date, COUNT(*) as count 
-             FROM certificates 
-             WHERE issue_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) 
-             GROUP BY DATE(issue_date) 
-             ORDER BY date ASC`
-        );
+        // 2. Issued today
+        const today = new Date().toISOString().split('T')[0];
+        const { count: todayCount, error: todayError } = await supabase
+            .from('certificates')
+            .select('*', { count: 'exact', head: true })
+            .gte('issue_date', today);
+
+        if (todayError) throw todayError;
+
+        // 3. Recent 5 certificates
+        const { data: recent, error: recentError } = await supabase
+            .from('certificates')
+            .select(`
+                id,
+                certificate_id,
+                issue_date,
+                status,
+                profiles (
+                    full_name
+                ),
+                templates (
+                    title
+                )
+            `)
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        if (recentError) throw recentError;
+
+        // 4. Trend Data (Manual aggregation since Supabase count is per request)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const { data: trendData, error: trendError } = await supabase
+            .from('certificates')
+            .select('issue_date')
+            .gte('issue_date', sevenDaysAgo.toISOString());
+
+        if (trendError) throw trendError;
+
+        const trendMap: Record<string, number> = {};
+        trendData.forEach(item => {
+            const d = new Date(item.issue_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            trendMap[d] = (trendMap[d] || 0) + 1;
+        });
+
+        const trend = Object.keys(trendMap).map(date => ({
+            date,
+            count: trendMap[date]
+        }));
 
         return NextResponse.json({
-            total: totalCertificates[0].count,
-            today: issuedToday[0].count,
-            recent,
-            trend: trend.map(t => ({
-                date: new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                count: t.count
-            }))
+            total: total || 0,
+            today: todayCount || 0,
+            recent: recent.map(r => ({
+                id: r.id,
+                certificate_id: r.certificate_id,
+                issue_date: r.issue_date,
+                status: r.status,
+                full_name: r.profiles ? (r.profiles as any).full_name : 'N/A',
+                template_name: r.templates ? (r.templates as any).title : 'Standard'
+            })),
+            trend
         });
     } catch (err: any) {
         console.error('Analytics error:', err);
