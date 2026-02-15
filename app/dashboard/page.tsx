@@ -56,40 +56,40 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-16 h-[calc(100vh-64px)]">
-                <div className="p-6">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Main Menu</p>
-                    <nav className="space-y-1">
-                        <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-bold">
+            <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-20 h-[calc(100vh-80px)]">
+                <div className="p-8">
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-6 px-4">Main Menu</p>
+                    <nav className="space-y-2">
+                        <button className="w-full flex items-center gap-3 px-5 py-3.5 bg-brand-50 text-brand-700 rounded-2xl font-bold transition-all">
                             <LayoutDashboard className="h-5 w-5" /> Dashboard
                         </button>
-                        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">
-                            <Award className="h-5 w-5" /> {user.role === 'admin' ? 'All Certificates' : 'My Certificates'}
+                        <button className="w-full flex items-center gap-3 px-5 py-3.5 text-slate-600 hover:bg-slate-50 rounded-2xl font-semibold transition-all group">
+                            <Award className="h-5 w-5 group-hover:text-brand-600" /> {user.role === 'admin' ? 'All Certificates' : 'My Certificates'}
                         </button>
                         {user.role === 'admin' && (
-                            <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">
-                                <FileText className="h-5 w-5" /> Templates
+                            <button className="w-full flex items-center gap-3 px-5 py-3.5 text-slate-600 hover:bg-slate-50 rounded-2xl font-semibold transition-all group">
+                                <FileText className="h-5 w-5 group-hover:text-brand-600" /> Templates
                             </button>
                         )}
-                        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">
-                            <Settings className="h-5 w-5" /> Settings
+                        <button className="w-full flex items-center gap-3 px-5 py-3.5 text-slate-600 hover:bg-slate-50 rounded-2xl font-semibold transition-all group">
+                            <Settings className="h-5 w-5 group-hover:text-brand-600" /> Settings
                         </button>
                     </nav>
                 </div>
 
-                <div className="mt-auto p-6 border-t border-slate-100">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                <div className="mt-auto p-8 border-t border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-4 mb-8 px-2">
+                        <div className="h-12 w-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white font-black shadow-lg shadow-brand-200">
                             {user.email.substring(0, 1).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
-                            <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                            <p className="text-sm font-black text-slate-900 truncate">{user.email}</p>
+                            <p className="text-xs font-bold text-brand-600 uppercase tracking-tighter">{user.role}</p>
                         </div>
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-[0.98] shadow-lg shadow-slate-200"
                     >
                         <LogOut className="h-4 w-4" /> Sign Out
                     </button>

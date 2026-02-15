@@ -2,9 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-/* No global colors; components decide their own colors */
+/* Custom selection color */
+::selection {
+  background-color: #bae0fd;
+  color: #0359a1;
+}
+
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl shadow-slate-200/50;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-brand-600 text-white rounded-xl font-bold transition-all duration-300 
+           hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-200 hover:-translate-y-0.5
+           active:translate-y-0 active:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold 
+           transition-all duration-300 hover:bg-slate-50 hover:border-slate-300 hover:shadow-md
+           active:bg-slate-100;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-600 to-accent-violet bg-clip-text text-transparent;
+  }
 }
 
 @layer utilities {

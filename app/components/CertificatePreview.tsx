@@ -81,22 +81,22 @@ export default function CertificatePreview({
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
         {/* Design Accents */}
-        <div className="absolute top-0 left-0 w-40 h-40 border-t-8 border-l-8 border-blue-600 -translate-x-4 -translate-y-4" />
-        <div className="absolute bottom-0 right-0 w-40 h-40 border-b-8 border-r-8 border-blue-600 translate-x-4 translate-y-4" />
+        <div className="absolute top-0 left-0 w-40 h-40 border-t-8 border-l-8 border-brand-600 -translate-x-4 -translate-y-4" />
+        <div className="absolute bottom-0 right-0 w-40 h-40 border-b-8 border-r-8 border-brand-600 translate-x-4 translate-y-4" />
 
         <div className="mb-12">
-          <Award className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+          <Award className="h-16 w-16 text-brand-600 mx-auto mb-4" />
           <h1 className="text-6xl font-black text-slate-900 tracking-tighter uppercase mb-2">Certificate</h1>
           <p className="text-xl font-bold text-slate-400 tracking-[0.3em] uppercase">Digital Excellence</p>
         </div>
 
         <div className="flex-1 flex flex-col justify-center items-center w-full">
           <p className="text-lg text-slate-500 italic mb-4">This high-integrity credential is proudly presented to</p>
-          <h2 className="text-5xl font-black text-slate-900 mb-8 border-b-4 border-slate-100 pb-4 w-full">
+          <h2 className="text-5xl font-black text-slate-900 mb-8 border-b-4 border-slate-100 pb-4 w-full text-balance">
             {recipientName}
           </h2>
           <p className="text-lg text-slate-500 italic mb-4">for the successful completion of the specialized program</p>
-          <h3 className="text-3xl font-black text-blue-600 uppercase tracking-tight mb-8">
+          <h3 className="text-3xl font-black text-brand-600 uppercase tracking-tight mb-8 text-balance">
             {courseTitle}
           </h3>
         </div>
@@ -137,7 +137,7 @@ export default function CertificatePreview({
 
         {/* Anti-Tamper Badge */}
         <div className="absolute top-12 right-12 opacity-10">
-          <ShieldCheck className="h-24 w-24 text-blue-600" />
+          <ShieldCheck className="h-24 w-24 text-brand-600" />
         </div>
       </div>
 
