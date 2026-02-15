@@ -3,6 +3,22 @@ import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Handles user registration by creating a new user account and associated profile.
+ * 
+ * Logic flow:
+ * 1. Validates required fields (email, password, fullName).
+ * 2. Checks if the email is already in use (users or profiles table).
+ * 3. Hashes the password using bcrypt.
+ * 4. Executes a database transaction:
+ *    - Inserts a new user record.
+ *    - Updates an existing orphaned profile OR creates a new one.
+ *    - Links the two records using a unique UUID.
+ * 5. Commits the transaction on success, or rolls back on any failure.
+ * 
+ * @param request - The incoming HTTP request containing registration data.
+ * @returns A JSON response indicating success or an error message.
+ */
 export async function POST(request: Request) {
     try {
         const { email, password, fullName, role = 'user' } = await request.json();
