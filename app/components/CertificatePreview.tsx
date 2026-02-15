@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Download, Award, ShieldCheck } from 'lucide-react';
+import { Download, Award, ShieldCheck, CheckCircle2, Globe, Lock } from 'lucide-react';
 
 interface CertificatePreviewProps {
   recipientName: string;
@@ -37,7 +37,7 @@ export default function CertificatePreview({
       try {
         const verificationUrl = `${window.location.origin}/verify?id=${certificateId}`;
         const url = await QRCode.toDataURL(verificationUrl, {
-          width: 120,
+          width: 140,
           margin: 1,
           color: {
             dark: '#0f172a',
@@ -59,6 +59,7 @@ export default function CertificatePreview({
       scale: 3,
       useCORS: true,
       logging: false,
+      backgroundColor: '#ffffff'
     });
 
     const imgData = canvas.toDataURL('image/png');
@@ -69,92 +70,153 @@ export default function CertificatePreview({
     });
 
     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save(`certificate-${certificateId}.pdf`);
+    pdf.save(`certisafe-credential-${certificateId}.pdf`);
   };
 
   return (
-    <div className="flex flex-col items-center gap-8">
-      {/* Certificate Page */}
-      <div
-        ref={certificateRef}
-        className="w-[900px] h-[640px] bg-white border-[20px] border-slate-900 p-16 relative flex flex-col items-center text-center shadow-2xl overflow-hidden"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
-        {/* Design Accents */}
-        <div className="absolute top-0 left-0 w-40 h-40 border-t-8 border-l-8 border-brand-600 -translate-x-4 -translate-y-4" />
-        <div className="absolute bottom-0 right-0 w-40 h-40 border-b-8 border-r-8 border-brand-600 translate-x-4 translate-y-4" />
+    <div className="flex flex-col items-center gap-12 group animate-fade-in-up">
+      {/* Premium Certificate Shell */}
+      <div className="relative p-1 bg-gradient-to-br from-slate-200 via-white to-slate-300 rounded-[2rem] shadow-3xl">
+        <div
+          ref={certificateRef}
+          className="w-[1000px] h-[700px] bg-white p-20 relative flex flex-col items-center text-center overflow-hidden rounded-[1.8rem]"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+          {/* Complex Security Background (Guilloche Pattern) */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #0e8ee9 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
 
-        <div className="mb-12">
-          <Award className="h-16 w-16 text-brand-600 mx-auto mb-4" />
-          <h1 className="text-6xl font-black text-slate-900 tracking-tighter uppercase mb-2">Certificate</h1>
-          <p className="text-xl font-bold text-slate-400 tracking-[0.3em] uppercase">Digital Excellence</p>
-        </div>
+          <div className="absolute inset-10 border-[1px] border-slate-100 rounded-[1.2rem] pointer-events-none"></div>
+          <div className="absolute inset-[11px] border-[4px] border-double border-slate-200 rounded-[1.1rem] pointer-events-none"></div>
 
-        <div className="flex-1 flex flex-col justify-center items-center w-full">
-          <p className="text-lg text-slate-500 italic mb-4">This high-integrity credential is proudly presented to</p>
-          <h2 className="text-5xl font-black text-slate-900 mb-8 border-b-4 border-slate-100 pb-4 w-full text-balance">
-            {recipientName}
-          </h2>
-          <p className="text-lg text-slate-500 italic mb-4">for the successful completion of the specialized program</p>
-          <h3 className="text-3xl font-black text-brand-600 uppercase tracking-tight mb-8 text-balance">
-            {courseTitle}
-          </h3>
-        </div>
-
-        <div className="w-full flex justify-between items-end mt-12">
-          <div className="text-left">
-            <div className="mb-6">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Certificate Identifier</p>
-              <p className="font-mono text-sm font-bold text-slate-900">{certificateId}</p>
-            </div>
-            <div className="flex gap-10">
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Issue Date</p>
-                <p className="text-sm font-bold text-slate-900">{issueDate}</p>
+          {/* Institutional Header */}
+          <div className="mb-14 relative z-10 w-full flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center">
+                <ShieldCheck className="text-white h-7 w-7" />
               </div>
-              {expiryDate && (
+              <div className="text-left font-black tracking-tighter leading-none">
+                <div className="text-xl">CertiSafe</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Institutional v2.4</div>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Authenticated Ledger</div>
+              <div className="font-mono text-xs font-bold text-slate-900 uppercase">NODE: LIVE-PRIMARY-01</div>
+            </div>
+          </div>
+
+          {/* Certificate Main Label */}
+          <div className="mb-14 relative z-10">
+            <h1 className="text-7xl font-black text-slate-900 tracking-tighter uppercase mb-2 italic">Certificate</h1>
+            <div className="flex items-center justify-center gap-4">
+              <div className="h-px w-10 bg-brand-500 opacity-30"></div>
+              <p className="text-xs font-black text-brand-600 tracking-[0.5em] uppercase">Professional Validation</p>
+              <div className="h-px w-10 bg-brand-500 opacity-30"></div>
+            </div>
+          </div>
+
+          {/* Content Body */}
+          <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10">
+            <p className="text-xl text-slate-400 font-medium italic mb-6">This cryptographically secure credential is awarded to</p>
+            <h2 className="text-6xl font-black text-slate-900 mb-10 pb-4 w-full text-balance tracking-tight">
+              {recipientName}
+            </h2>
+            <p className="text-xl text-slate-400 font-medium italic mb-6">for successfully meeting the rigorous standards established by the</p>
+            <h3 className="text-4xl font-black text-slate-900 uppercase tracking-tight mb-4 text-balance">
+              {courseTitle}
+            </h3>
+            <div className="w-20 h-1 bg-brand-500 rounded-full mb-10"></div>
+          </div>
+
+          {/* Institutional Footer */}
+          <div className="w-full flex justify-between items-end mt-12 relative z-10">
+            <div className="text-left">
+              <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 max-w-[280px]">
+                <div className="flex items-center gap-3 text-slate-400 mb-2">
+                  <Lock className="h-3 w-3" />
+                  <p className="text-[10px] font-black uppercase tracking-widest">Protocol Identifier</p>
+                </div>
+                <p className="font-mono text-[11px] font-bold text-slate-600 break-all leading-tight italic">{certificateId}</p>
+              </div>
+              <div className="flex gap-12 pl-4">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Expiry Date</p>
-                  <p className="text-sm font-bold text-slate-900">{expiryDate}</p>
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1 italic">Issued</p>
+                  <p className="text-sm font-bold text-slate-900 tracking-tighter font-mono uppercase">{issueDate}</p>
+                </div>
+                {expiryDate && (
+                  <div>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1 italic">Expiry</p>
+                    <p className="text-sm font-bold text-slate-900 tracking-tighter font-mono uppercase">{expiryDate}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Central Seal (Aesthetic Only) */}
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-[-20px] opacity-10 blur-sm pointer-events-none">
+              <Award className="h-40 w-40 text-brand-600" />
+            </div>
+
+            <div className="flex items-center gap-16">
+              {qrCodeUrl && (
+                <div className="flex flex-col items-center group/qr cursor-pointer">
+                  <div className="p-3 bg-white border-2 border-slate-900 rounded-2xl shadow-xl transition-all group-hover/qr:scale-105 duration-500">
+                    <img src={qrCodeUrl} alt="Verify" className="w-28 h-28" />
+                  </div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase mt-4 tracking-widest italic flex items-center gap-2">
+                    <Globe className="h-3 w-3" />
+                    Global Verification
+                  </p>
                 </div>
               )}
+
+              <div className="text-right pb-4">
+                <div className="mb-6">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Jon_Kirsch_Signature.png" className="h-16 ml-auto opacity-70 grayscale contrast-125 brightness-110 border-b border-slate-200" alt="Signature" />
+                </div>
+                <p className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Authority Signature</p>
+                <p className="text-[10px] text-brand-600 font-bold uppercase tracking-widest mt-1">CertiSafe Framework Director</p>
+              </div>
             </div>
           </div>
 
-          {qrCodeUrl && (
-            <div className="flex flex-col items-center">
-              <img src={qrCodeUrl} alt="Verify" className="w-24 h-24 border-2 border-slate-900 rounded-lg p-1" />
-              <p className="text-[8px] font-black text-slate-400 uppercase mt-2">Scan to Authenticate</p>
-            </div>
-          )}
-
-          <div className="text-right">
-            <div className="w-48 border-b-2 border-slate-900 mb-2" />
-            <p className="text-sm font-black text-slate-900 uppercase">Director of Certification</p>
-            <p className="text-xs text-slate-500">CertiSafe Identity Protocol</p>
-          </div>
-        </div>
-
-        {/* Anti-Tamper Badge */}
-        <div className="absolute top-12 right-12 opacity-10">
-          <ShieldCheck className="h-24 w-24 text-brand-600" />
+          {/* Decorative Corner Seals */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-500/5 blur-[80px] rounded-full pointer-events-none"></div>
         </div>
       </div>
 
-      {/* Verification Footer (Non-Printed) */}
-      <div className="w-full max-w-[900px] bg-slate-900 rounded-3xl p-8 flex items-center justify-between text-white">
-        <div className="flex-1 mr-8">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Cryptographic Fingerprint (SHA-256)</p>
-          <code className="text-[10px] font-mono bg-slate-800 p-2 rounded block break-all text-blue-400">
-            {dataHash || "Not Available"}
-          </code>
+      {/* Verification & Action Bar (Non-Printed) */}
+      <div className="w-full max-w-[1000px] bg-slate-900 rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center justify-between text-white gap-10 shadow-3xl border border-white/5 relative overflow-hidden group">
+        <div className="flex-1 min-w-0 relative z-10 w-full md:w-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1.5 w-1.5 rounded-full bg-brand-500"></div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Cryptographic Signature (SHA-256)</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
+            <code className="text-[11px] font-mono break-all text-brand-400 leading-relaxed italic font-medium">
+              {dataHash || "PENDING_BLOCKCHAIN_SYNC_SIGNAL_ERR"}
+            </code>
+          </div>
         </div>
-        <button
-          onClick={downloadPDF}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 transition-all active:scale-95 whitespace-nowrap"
-        >
-          <Download className="h-5 w-5" /> Download PDF
-        </button>
+
+        <div className="flex gap-4 relative z-10 w-full md:w-auto">
+          <button
+            onClick={downloadPDF}
+            className="flex-1 md:flex-none bg-white text-slate-900 hover:bg-slate-50 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl group/btn"
+          >
+            <Download className="h-5 w-5 group-hover/btn:-translate-y-1 transition-transform" />
+            Export Professional PDF
+          </button>
+          <button className="hidden md:flex p-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all">
+            <Globe className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Animation light streak */}
+        <div className="absolute top-0 -left-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-25deg] group-hover:left-[150%] transition-all duration-1000 pointer-events-none"></div>
       </div>
     </div>
   );
