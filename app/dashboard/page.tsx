@@ -12,12 +12,15 @@ import {
     FileText,
     TrendingUp,
     Search,
-    User,
+    Users,
     ChevronRight,
     Bell
 } from 'lucide-react';
 import AdminDashboard from '../components/AdminDashboard';
 import UserDashboard from '../components/UserDashboard';
+import TemplateManager from '../components/TemplateManager';
+import UserManager from '../components/UserManager';
+import SystemSettings from '../components/SystemSettings';
 
 export default function Dashboard() {
     const router = useRouter();
@@ -26,6 +29,7 @@ export default function Dashboard() {
     const [adminStats, setAdminStats] = React.useState({ total: 0, today: 0, recent: [] });
     const [userCerts, setUserCerts] = React.useState<any[]>([]);
     const [subLoading, setSubLoading] = React.useState(false);
+    const [activeView, setActiveView] = React.useState<'main' | 'templates' | 'users' | 'settings'>('main');
 
     const fetchDashboardData = React.useCallback(async (role: string) => {
         setSubLoading(true);
@@ -102,6 +106,31 @@ export default function Dashboard() {
 
     if (!user) return null;
 
+    const renderView = () => {
+        switch (activeView) {
+            case 'templates':
+                return <TemplateManager />;
+            case 'users':
+                return <UserManager />;
+            case 'settings':
+                return <SystemSettings />;
+            default:
+                return user.role === 'admin' ? (
+                    <AdminDashboard
+                        stats={adminStats}
+                        loading={subLoading}
+                        onRefresh={() => fetchDashboardData('admin')}
+                        onRevoke={handleRevoke}
+                    />
+                ) : (
+                    <UserDashboard
+                        certificates={userCerts}
+                        loading={subLoading}
+                    />
+                );
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50/50 flex flex-col lg:flex-row">
             {/* Enterprise Sidebar */}
@@ -116,19 +145,28 @@ export default function Dashboard() {
 
                     <p className="hidden lg:block text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] mb-8 px-4">Workspace Navigation</p>
                     <nav className="flex lg:flex-col gap-2 lg:gap-3 overflow-x-auto pb-2 lg:pb-0">
-                        <button className="flex-shrink-0 lg:w-full flex items-center justify-between px-6 py-4 bg-brand-600 text-white rounded-2xl font-black text-sm shadow-2xl shadow-brand-100 transition-all active:scale-95">
+                        <button
+                            onClick={() => setActiveView('main')}
+                            className={`flex-shrink-0 lg:w-full flex items-center justify-between px-6 py-4 rounded-2xl font-black text-sm transition-all active:scale-95 ${activeView === 'main' ? 'bg-brand-600 text-white shadow-2xl shadow-brand-100' : 'text-slate-400 hover:text-brand-600 hover:bg-brand-50'}`}
+                        >
                             <div className="flex items-center gap-4">
                                 <LayoutDashboard className="h-5 w-5" /> <span className="hidden sm:inline">Dashboard</span>
                             </div>
                             <ChevronRight className="hidden lg:block h-4 w-4 opacity-50" />
                         </button>
+
                         {[
-                            { icon: Award, label: user.role === 'admin' ? 'Credential Ledger' : 'My Credentials' },
-                            { icon: FileText, label: 'Asset Templates', hide: user.role !== 'admin' },
-                            { icon: Settings, label: 'Protocol Settings' }
+                            { id: 'templates' as const, icon: FileText, label: 'Asset Templates', hide: user.role !== 'admin' },
+                            { id: 'users' as const, icon: Users, label: 'Identity Management', hide: user.role !== 'admin' },
+                            { id: 'settings' as const, icon: Settings, label: 'Protocol Settings' }
                         ].map((item, i) => !item.hide && (
-                            <button key={i} className="flex-shrink-0 lg:w-full flex items-center gap-4 px-6 py-4 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-2xl font-bold transition-all group">
-                                <item.icon className="h-5 w-5 group-hover:scale-110 transition-transform" /> <span className="hidden sm:inline">{item.label}</span>
+                            <button
+                                key={i}
+                                onClick={() => setActiveView(item.id)}
+                                className={`flex-shrink-0 lg:w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all group ${activeView === item.id ? 'bg-brand-50 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-brand-600 hover:bg-brand-50'}`}
+                            >
+                                <item.icon className={`h-5 w-5 ${activeView === item.id ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
+                                <span className="hidden sm:inline">{item.label}</span>
                             </button>
                         ))}
                     </nav>
@@ -182,22 +220,11 @@ export default function Dashboard() {
                 </div>
 
                 <div className="p-6 lg:p-10">
-                    {user.role === 'admin' ? (
-                        <AdminDashboard
-                            stats={adminStats}
-                            loading={subLoading}
-                            onRefresh={() => fetchDashboardData('admin')}
-                            onRevoke={handleRevoke}
-                        />
-                    ) : (
-                        <UserDashboard
-                            certificates={userCerts}
-                            loading={subLoading}
-                        />
-                    )}
+                    {renderView()}
                 </div>
             </main>
         </div>
     );
 }
+
 

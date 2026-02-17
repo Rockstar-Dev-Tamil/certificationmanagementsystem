@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, RefreshCcw, Award, ShieldCheck, UserCheck, TrendingUp, Search, Filter, Eye, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, RefreshCcw, Award, ShieldCheck, UserCheck, TrendingUp, Search, Filter, Eye, Trash2, MoreHorizontal, Download } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AdminDashboardProps {
@@ -12,6 +12,44 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: AdminDashboardProps) {
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [statusFilter, setStatusFilter] = React.useState<'all' | 'valid' | 'revoked'>('all');
+
+    const filteredRecent = React.useMemo(() => {
+        if (!stats.recent) return [];
+        return stats.recent.filter((row: any) => {
+            const matchesSearch = row.certificate_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                row.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                row.recipient_email?.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = statusFilter === 'all' || row.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+    }, [stats.recent, searchTerm, statusFilter]);
+
+    const exportToCSV = () => {
+        if (!stats.recent) return;
+        const headers = ['ID Key', 'Recipient', 'Email', 'Framework', 'Timestamp', 'Status', 'Hash'];
+        const csvRows = stats.recent.map((row: any) => [
+            row.certificate_id,
+            row.full_name,
+            row.recipient_email,
+            row.template_name,
+            new Date(row.issue_date).toLocaleString(),
+            row.status,
+            row.data_hash
+        ]);
+
+        const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `certisafe-ledger-${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="animate-fade-in">
             {/* Superior Header */}
@@ -27,8 +65,15 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
                 </div>
                 <div className="flex gap-4 w-full md:w-auto">
                     <button
+                        onClick={exportToCSV}
+                        className="flex-1 md:flex-none px-6 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Download className="h-4 w-4" />
+                        Export Ledger
+                    </button>
+                    <button
                         onClick={onRefresh}
-                        className="flex-1 md:flex-none p-4 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 transition-colors"
+                        className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 transition-colors"
                     >
                         <RefreshCcw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
                     </button>
@@ -137,12 +182,27 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
                         <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest italic">Immutable Transactional Ledger</p>
                     </div>
                     <div className="flex items-center gap-4 w-full md:w-auto">
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value as any)}
+                            className="px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all cursor-pointer"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="valid">Valid</option>
+                            <option value="revoked">Revoked</option>
+                        </select>
                         <div className="relative flex-1 md:flex-none group">
                             <Search className="h-4 w-4 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-600 transition-colors" />
-                            <input type="text" placeholder="Protocol Hash / Name..." className="pl-14 pr-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:bg-white focus:border-brand-100 transition-all w-full md:w-80 shadow-inner" />
+                            <input
+                                type="text"
+                                placeholder="Protocol Hash / Name..."
+                                className="pl-14 pr-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:bg-white focus:border-brand-100 transition-all w-full md:w-80 shadow-inner"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <button className="p-4 bg-slate-50 rounded-[1.25rem] hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
-                            <Filter className="h-5 w-5 text-slate-500" />
+                        <button className="p-4 bg-brand-50 text-brand-600 rounded-[1.25rem] hover:bg-brand-100 transition-colors border border-transparent">
+                            <Filter className="h-5 w-5" />
                         </button>
                     </div>
                 </div>
@@ -161,10 +221,10 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
                         <tbody className="divide-y divide-slate-50 italic">
                             {loading ? (
                                 <tr><td colSpan={6} className="px-10 py-20 text-center font-black animate-pulse text-slate-300 tracking-widest uppercase italic">Initializing Data Interface...</td></tr>
-                            ) : stats.recent?.length === 0 ? (
-                                <tr><td colSpan={6} className="px-10 py-20 text-center text-slate-400 font-bold italic tracking-tighter">THE LEDGER IS VACANT. AWAITING INITIAL ISSUANCE.</td></tr>
+                            ) : filteredRecent.length === 0 ? (
+                                <tr><td colSpan={6} className="px-10 py-20 text-center text-slate-400 font-bold italic tracking-tighter uppercase">No assets matching request.</td></tr>
                             ) : (
-                                stats.recent?.map((row: any, i: number) => (
+                                filteredRecent.map((row: any, i: number) => (
                                     <tr key={i} className="hover:bg-brand-50/20 transition-all group duration-300">
                                         <td className="px-10 py-6 text-slate-400 text-[10px] font-black group-hover:text-brand-600 transition-colors tracking-tighter">{row.certificate_id}</td>
                                         <td className="px-10 py-6">
@@ -218,3 +278,4 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
         </div>
     );
 }
+
