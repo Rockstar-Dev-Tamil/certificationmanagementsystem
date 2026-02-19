@@ -1,53 +1,104 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Shield, Zap, Database, Globe, Lock, Server } from 'lucide-react';
 
 export default function SystemSettings() {
+    const [settings, setSettings] = useState<any>({
+        blockchain_sync: true,
+        ai_fraud_detection: true,
+        institutional_2fa: false
+    });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        try {
+            const res = await fetch('/api/settings');
+            const data = await res.json();
+            if (Object.keys(data).length > 0) {
+                setSettings(data);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleSetting = async (key: string) => {
+        const newVal = !settings[key];
+        const updated = { ...settings, [key]: newVal };
+        setSettings(updated);
+
+        setSaving(true);
+        try {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [key]: newVal })
+            });
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
-        <div className="animate-fade-in">
-            <div className="mb-16">
-                <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Protocol Settings</h2>
-                <p className="text-slate-500 mt-2 font-medium italic text-lg">System-wide configuration and security protocols.</p>
+        <div className="animate-fade-in text-slate-900">
+            <div className="flex justify-between items-end mb-16">
+                <div>
+                    <h2 className="text-5xl font-black tracking-tighter">Protocol Settings</h2>
+                    <p className="text-slate-500 mt-2 font-medium italic text-lg">System-wide configuration and security protocols.</p>
+                </div>
+                {saving && <div className="text-[10px] font-black uppercase tracking-widest text-brand-600 animate-pulse">Syncing Specifications...</div>}
             </div>
 
             <div className="grid md:grid-cols-2 gap-10">
-                <div className="glass-card p-10 rounded-[3rem] bg-white border border-slate-50 shadow-sm">
+                <div className="glass-card p-10 rounded-[3rem] bg-white border border-slate-50 shadow-sm relative overflow-hidden">
                     <div className="flex items-center gap-4 mb-10">
                         <div className="p-4 bg-brand-50 rounded-2xl">
                             <Shield className="h-6 w-6 text-brand-600" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Security Protocol</h3>
+                        <h3 className="text-2xl font-black tracking-tight uppercase italic">Security Protocol</h3>
                     </div>
 
-                    <div className="space-y-8">
+                    <div className="space-y-8 relative z-10">
                         {[
-                            { label: "Blockchain Sync", desc: "Enable real-time cryptographic commits", active: true },
-                            { label: "AI Fraud Detection", desc: "Monitor issuance for anomalous patterns", active: true },
-                            { label: "Institutional 2FA", desc: "Require multi-factor for bulk issuance", active: false },
+                            { id: 'blockchain_sync', label: "Blockchain Sync", desc: "Enable real-time cryptographic commits" },
+                            { id: 'ai_fraud_detection', label: "AI Fraud Detection", desc: "Monitor issuance for anomalous patterns" },
+                            { id: 'institutional_2fa', label: "Institutional 2FA", desc: "Require multi-factor for bulk issuance" },
                         ].map((s, i) => (
                             <div key={i} className="flex justify-between items-center group">
                                 <div>
-                                    <p className="font-bold text-slate-900 group-hover:text-brand-600 transition-colors uppercase italic tracking-tight">{s.label}</p>
+                                    <p className="font-bold group-hover:text-brand-600 transition-colors uppercase italic tracking-tight">{s.label}</p>
                                     <p className="text-xs text-slate-400 font-medium">{s.desc}</p>
                                 </div>
-                                <div className={`w-14 h-8 rounded-full p-1 cursor-pointer transition-all ${s.active ? 'bg-brand-600' : 'bg-slate-200'}`}>
-                                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${s.active ? 'translate-x-6' : 'translate-x-0'}`} />
+                                <div
+                                    onClick={() => toggleSetting(s.id)}
+                                    className={`w-14 h-8 rounded-full p-1 cursor-pointer transition-all ${settings[s.id] ? 'bg-brand-600' : 'bg-slate-200'}`}
+                                >
+                                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${settings[s.id] ? 'translate-x-6' : 'translate-x-0'}`} />
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="glass-card p-10 rounded-[3rem] bg-white border border-slate-50 shadow-sm">
+                <div className="glass-card p-10 rounded-[3rem] bg-white border border-slate-50 shadow-sm relative overflow-hidden">
                     <div className="flex items-center gap-4 mb-10">
                         <div className="p-4 bg-violet-50 rounded-2xl">
                             <Zap className="h-6 w-6 text-violet-600" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Infrastructure</h3>
+                        <h3 className="text-2xl font-black tracking-tight uppercase italic">Infrastructure</h3>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-6 relative z-10">
                         <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                             <div className="flex items-center gap-3 mb-4">
                                 <Database className="h-4 w-4 text-slate-400" />

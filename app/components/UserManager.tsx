@@ -7,6 +7,7 @@ export default function UserManager() {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     useEffect(() => {
         fetchUsers();
@@ -21,6 +22,39 @@ export default function UserManager() {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleBlock = async (userId: string, currentStatus: boolean) => {
+        setActionLoading(userId);
+        try {
+            const res = await fetch(`/api/users/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_blocked: !currentStatus })
+            });
+            if (res.ok) fetchUsers();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleRoleUpdate = async (userId: string, newRole: string) => {
+        if (!confirm(`Elevate/Demote identity to ${newRole}?`)) return;
+        setActionLoading(userId);
+        try {
+            const res = await fetch(`/api/users/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole })
+            });
+            if (res.ok) fetchUsers();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -62,7 +96,7 @@ export default function UserManager() {
                             <tr>
                                 <th className="px-10 py-6">Identity</th>
                                 <th className="px-10 py-6">Assets</th>
-                                <th className="px-10 py-6">Joined Protocol</th>
+                                <th className="px-10 py-6">Status</th>
                                 <th className="px-10 py-6 text-right">Terminal</th>
                             </tr>
                         </thead>
@@ -73,14 +107,14 @@ export default function UserManager() {
                                 <tr><td colSpan={4} className="px-10 py-20 text-center text-slate-400 font-bold italic tracking-tighter uppercase">No identities found.</td></tr>
                             ) : (
                                 filteredUsers.map((user, i) => (
-                                    <tr key={i} className="hover:bg-brand-50/20 transition-all group duration-300">
+                                    <tr key={i} className={`hover:bg-brand-50/20 transition-all group duration-300 ${user.is_blocked ? 'bg-rose-50/30' : ''}`}>
                                         <td className="px-10 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-400 text-sm shrink-0 group-hover:bg-white group-hover:shadow-md transition-all">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm shrink-0 transition-all ${user.is_blocked ? 'bg-rose-100 text-rose-400' : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:shadow-md'}`}>
                                                     {user.full_name?.charAt(0) || <Users className="h-5 w-5" />}
                                                 </div>
                                                 <div>
-                                                    <p className="font-extrabold text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors">{user.full_name || 'Anonymous'}</p>
+                                                    <p className={`font-extrabold tracking-tight transition-colors ${user.is_blocked ? 'text-rose-600' : 'text-slate-900 group-hover:text-brand-600'}`}>{user.full_name || 'Anonymous'}</p>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Mail className="h-3 w-3 text-slate-300" />
                                                         <p className="text-[10px] text-slate-400 font-black italic">{user.email}</p>
@@ -96,17 +130,36 @@ export default function UserManager() {
                                                 <span className="font-black text-slate-700">{user.issuance_count}</span>
                                             </div>
                                         </td>
-                                        <td className="px-10 py-6 font-bold text-slate-500 text-xs">
-                                            {new Date(user.created_at).toLocaleDateString()}
+                                        <td className="px-10 py-6">
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${user.is_blocked ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                                {user.is_blocked ? 'Suspended' : 'Verified'}
+                                            </span>
                                         </td>
                                         <td className="px-10 py-6 text-right">
                                             <div className="flex justify-end items-center gap-2">
-                                                <button className="p-3 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
+                                                <button
+                                                    disabled={actionLoading === user.id}
+                                                    onClick={() => handleToggleBlock(user.id, user.is_blocked)}
+                                                    className={`p-3 rounded-xl transition-all ${user.is_blocked ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50'} ${actionLoading === user.id ? 'animate-pulse' : ''}`}
+                                                    title={user.is_blocked ? 'Restore Identity' : 'Suspend Identity'}
+                                                >
                                                     <ShieldAlert className="h-4 w-4" />
                                                 </button>
-                                                <button className="p-3 bg-slate-50 text-slate-400 hover:bg-slate-100 rounded-xl transition-all">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </button>
+                                                <div className="relative group/menu">
+                                                    <button className="p-3 bg-slate-50 text-slate-400 hover:bg-slate-100 rounded-xl transition-all">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </button>
+                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-50 hidden group-hover/menu:block z-50 overflow-hidden">
+                                                        <button
+                                                            onClick={() => handleRoleUpdate(user.id, 'admin')}
+                                                            className="w-full px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest hover:bg-brand-50 hover:text-brand-600 transition-all border-b border-slate-50"
+                                                        >Make Admin</button>
+                                                        <button
+                                                            onClick={() => handleRoleUpdate(user.id, 'user')}
+                                                            className="w-full px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 hover:text-slate-900 transition-all"
+                                                        >Make Standard</button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>

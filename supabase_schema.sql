@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'issuer', 'auditor', 'user')),
+  org_secret VARCHAR(255), -- Stores secret for organization verification if needed
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
+  is_blocked BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

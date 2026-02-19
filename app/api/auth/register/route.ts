@@ -5,51 +5,61 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: Request) {
     try {
-        const { email, password, fullName, role = 'user' } = await request.json();
+        const body = await request.json();
+        const { email, password, fullName, role = 'user', orgSecret } = body;
 
         if (!email || !password || !fullName) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // 1. Check if email already exists
-        const { data: existingUser, error: fetchError } = await supabase
+        // 1. Secret Key Check for Organizations
+        if (role === 'admin' || role === 'issuer') {
+            const headerSecret = request.headers.get('x-org-secret');
+            const providedSecret = headerSecret || orgSecret;
+            if (providedSecret !== process.env.ORG_SECRET_KEY) {
+                return NextResponse.json({ error: 'Invalid Organization Security Key' }, { status: 403 });
+            }
+        }
+
+        // 2. Check if email already exists
+        const { data: existingUser } = await supabase
             .from('users')
             .select('id')
             .eq('email', email)
             .single();
 
         if (existingUser) {
-            return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
+            return NextResponse.json({ error: 'Identity already registered in protocol' }, { status: 409 });
         }
 
         const userId = uuidv4();
         const hashedPassword = await bcrypt.hash(password, 12);
 
-        // 2. Create User record
+        // 3. Create User record
         const { error: userError } = await supabase
             .from('users')
             .insert([{ id: userId, email, password_hash: hashedPassword, role }]);
 
         if (userError) throw userError;
 
-        // 3. Create/Sync Profile
-        const { data: existingProfile } = await supabase
+        // 4. Critical Sync: Link existing floating profiles to this user identity
+        const { data: floatingProfile } = await supabase
             .from('profiles')
             .select('id')
             .eq('email', email)
-            .single();
+            .is('user_id', null);
 
-        if (existingProfile) {
-            const { error: profileUpdateError } = await supabase
+        if (floatingProfile && floatingProfile.length > 0) {
+            const { error: syncError } = await supabase
                 .from('profiles')
                 .update({ user_id: userId, full_name: fullName })
-                .eq('id', existingProfile.id);
-            if (profileUpdateError) throw profileUpdateError;
+                .eq('id', floatingProfile[0].id);
+            if (syncError) throw syncError;
         } else {
-            const { error: profileInsertError } = await supabase
+            const { error: profileError } = await supabase
                 .from('profiles')
                 .insert([{ id: uuidv4(), user_id: userId, email, full_name: fullName }]);
-            if (profileInsertError) throw profileInsertError;
+            if (profileError) throw profileError;
         }
 
         return NextResponse.json({
