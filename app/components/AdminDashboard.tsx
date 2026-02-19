@@ -14,6 +14,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: AdminDashboardProps) {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState<'all' | 'valid' | 'revoked'>('all');
+    const [range, setRange] = React.useState<'7D' | '30D'>('7D');
 
     const filteredRecent = React.useMemo(() => {
         if (!stats.recent) return [];
@@ -85,7 +86,7 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
             </div>
 
             {/* Dynamic Metric Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
                 {[
                     { label: "Total Assets Issued", value: stats.total?.toString() || '0', color: "bg-brand-600", icon: Award },
                     { label: "Active Frameworks", value: stats.templates?.toString() || '0', color: "bg-violet-600", icon: ShieldCheck },
@@ -119,8 +120,14 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
                             <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">Global Protocol Activity</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="px-4 py-2 bg-slate-50 text-[10px] font-black text-slate-400 rounded-xl hover:text-brand-600">7D</button>
-                            <button className="px-4 py-2 bg-brand-50 text-[10px] font-black text-brand-600 rounded-xl">30D</button>
+                            <button
+                                onClick={() => setRange('7D')}
+                                className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all ${range === '7D' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-400 hover:text-brand-600'}`}
+                            >7D</button>
+                            <button
+                                onClick={() => setRange('30D')}
+                                className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all ${range === '30D' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-400 hover:text-brand-600'}`}
+                            >30D</button>
                         </div>
                     </div>
                     <div className="h-96 w-full mt-4">
@@ -183,7 +190,15 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
                                 })
                             )}
                         </div>
-                        <button className="w-full mt-16 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors">View Security Logs</button>
+                        <button
+                            onClick={() => {
+                                // Simple scroll to ledger and filter for security actions if we had action type filtering
+                                const ledger = document.querySelector('.glass-card.rounded-\\[3rem\\].bg-white.overflow-hidden.shadow-2xl.shadow-slate-200');
+                                ledger?.scrollIntoView({ behavior: 'smooth' });
+                                alert('Security Logs context active. Use the Registry to audit detailed records.');
+                            }}
+                            className="w-full mt-16 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                        >View Security Logs</button>
                     </div>
                     <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-brand-600/20 blur-[100px] rounded-full pointer-events-none"></div>
                 </div>
@@ -191,16 +206,16 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
 
             {/* Modern Transaction Log */}
             <div className="glass-card rounded-[3rem] bg-white overflow-hidden shadow-2xl shadow-slate-200">
-                <div className="px-10 py-10 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
+                <div className="px-10 py-10 border-b border-slate-50 flex flex-wrap justify-between items-center gap-6">
+                    <div className="min-w-0">
                         <h3 className="font-black text-slate-900 text-2xl tracking-tight">Core Asset Registry</h3>
                         <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest italic">Immutable Transactional Ledger</p>
                     </div>
-                    <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value as any)}
-                            className="px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all cursor-pointer"
+                            className="flex-1 md:flex-none px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all cursor-pointer"
                         >
                             <option value="all">All Status</option>
                             <option value="valid">Valid</option>
@@ -216,7 +231,14 @@ export default function AdminDashboard({ stats, loading, onRefresh, onRevoke }: 
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <button className="p-4 bg-brand-50 text-brand-600 rounded-[1.25rem] hover:bg-brand-100 transition-colors border border-transparent">
+                        <button
+                            onClick={() => {
+                                setSearchTerm('');
+                                setStatusFilter('all');
+                            }}
+                            className="p-4 bg-brand-50 text-brand-600 rounded-[1.25rem] hover:bg-brand-100 transition-colors border border-transparent"
+                            title="Reset Filters"
+                        >
                             <Filter className="h-5 w-5" />
                         </button>
                     </div>

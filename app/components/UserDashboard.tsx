@@ -39,6 +39,26 @@ export default function UserDashboard({ certificates, loading }: UserDashboardPr
         document.body.removeChild(link);
     };
 
+    const exportSingleCert = (cert: any) => {
+        const headers = ['Title', 'ID', 'Issue Date', 'Expiry'];
+        const data = [
+            cert.title || cert.course_title,
+            cert.id || cert.certificate_id,
+            cert.date || new Date(cert.issue_date).toLocaleDateString(),
+            cert.expiry || 'N/A'
+        ];
+
+        const csvContent = [headers, data].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `credential-${cert.id || cert.certificate_id}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="animate-fade-in">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
@@ -118,7 +138,10 @@ export default function UserDashboard({ certificates, loading }: UserDashboardPr
                                         Visual Preview
                                         <Eye className="h-4 w-4 opacity-50 group-hover/btn:opacity-100" />
                                     </Link>
-                                    <button className="flex items-center justify-center gap-2 bg-white border border-slate-100 text-slate-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:text-brand-600 hover:border-brand-100 transition-all active:scale-95">
+                                    <button
+                                        onClick={() => exportSingleCert(cert)}
+                                        className="flex items-center justify-center gap-2 bg-white border border-slate-100 text-slate-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:text-brand-600 hover:border-brand-100 transition-all active:scale-95"
+                                    >
                                         <Download className="h-4 w-4" /> Export
                                     </button>
                                 </div>

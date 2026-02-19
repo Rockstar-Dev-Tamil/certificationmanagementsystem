@@ -135,7 +135,10 @@ export default function SystemSettings() {
                             <p className="text-slate-400 text-sm font-medium">Download full system logs and protocol history.</p>
                         </div>
                     </div>
-                    <button className="px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-xl active:scale-95">
+                    <button
+                        onClick={() => window.open('/api/audit/export', '_blank')}
+                        className="px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-xl active:scale-95"
+                    >
                         Download Audit Frame
                     </button>
                 </div>
