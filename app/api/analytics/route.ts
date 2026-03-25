@@ -16,6 +16,32 @@ export async function GET() {
 
         if (countError) throw countError;
 
+        // 1b. Status counts
+        const [{ count: validCount, error: validError }, { count: revokedCount, error: revokedError }, { count: expiredCount, error: expiredError }] =
+          await Promise.all([
+            supabase.from('certificates').select('*', { count: 'exact', head: true }).eq('status', 'valid'),
+            supabase.from('certificates').select('*', { count: 'exact', head: true }).eq('status', 'revoked'),
+            supabase.from('certificates').select('*', { count: 'exact', head: true }).eq('status', 'expired'),
+          ]);
+
+        if (validError) throw validError;
+        if (revokedError) throw revokedError;
+        if (expiredError) throw expiredError;
+
+        // 1c. Expiring soon (next 30 days)
+        const now = new Date();
+        const soon = new Date();
+        soon.setDate(soon.getDate() + 30);
+        const { count: expiringSoon, error: expSoonError } = await supabase
+          .from('certificates')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'valid')
+          .not('expiry_date', 'is', null)
+          .gte('expiry_date', now.toISOString())
+          .lte('expiry_date', soon.toISOString());
+
+        if (expSoonError) throw expSoonError;
+
         // 2. Issued today
         const today = new Date().toISOString().split('T')[0];
         const { count: todayCount, error: todayError } = await supabase
@@ -81,6 +107,35 @@ export async function GET() {
             count: trendMap[date]
         }));
 
+        // 6b. Monthly aggregates (last 12 months)
+        const monthsAgo = new Date();
+        monthsAgo.setMonth(monthsAgo.getMonth() - 12);
+        const { data: yearData, error: yearError } = await supabase
+          .from('certificates')
+          .select('issue_date,status')
+          .gte('issue_date', monthsAgo.toISOString());
+        if (yearError) throw yearError;
+
+        const monthKey = (iso: string) => {
+          const d = new Date(iso);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        };
+        const monthAgg: Record<string, { month: string; issue: number; revoke: number; expire: number }> = {};
+        yearData.forEach((row: any) => {
+          const m = monthKey(row.issue_date);
+          monthAgg[m] ||= { month: m, issue: 0, revoke: 0, expire: 0 };
+          monthAgg[m].issue += 1;
+          if (row.status === 'revoked') monthAgg[m].revoke += 1;
+          if (row.status === 'expired') monthAgg[m].expire += 1;
+        });
+        const monthly = Object.values(monthAgg).sort((a, b) => (a.month < b.month ? -1 : 1));
+
+        const statusDistribution = [
+          { name: 'Active', value: validCount || 0 },
+          { name: 'Revoked', value: revokedCount || 0 },
+          { name: 'Expired', value: expiredCount || 0 },
+        ];
+
         // 7. Recent Audit Logs
         const { data: audits, error: auditError } = await supabase
             .from('audit_logs')
@@ -92,6 +147,10 @@ export async function GET() {
 
         return NextResponse.json({
             total: total || 0,
+            active: validCount || 0,
+            revoked: revokedCount || 0,
+            expired: expiredCount || 0,
+            expiringSoon: expiringSoon || 0,
             today: todayCount || 0,
             templates: templateCount || 0,
             profiles: profileCount || 0,
@@ -104,6 +163,8 @@ export async function GET() {
                 template_name: r.templates ? (r.templates as any).title : 'Standard'
             })),
             trend,
+            monthly,
+            statusDistribution,
             audits: audits || []
         });
     } catch (err: any) {

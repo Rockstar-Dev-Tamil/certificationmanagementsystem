@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getAuthUser, getProfileByUserId, logAudit } from '@/lib/security';
 
 export async function POST(req: Request) {
     try {
+        const user = await getAuthUser();
+        if (!user || user.role !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { certificateId, reason } = await req.json();
 
         if (!certificateId) {
@@ -22,14 +28,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
         }
 
-        // Log the action in audit_logs
-        await supabase
-            .from('audit_logs')
-            .insert([{
-                action: 'REVOKE_CERTIFICATE',
-                target_id: certificateId,
-                details: reason || 'Protocol revocation triggered'
-            }]);
+        const profile = await getProfileByUserId(user.userId);
+        await logAudit('REVOKE_CERTIFICATE', {
+            performedBy: profile?.id ?? null,
+            targetId: certificateId,
+            details: { reason: reason || 'Protocol revocation triggered' },
+        });
 
         return NextResponse.json({ success: true, message: 'Certificate revoked successfully' });
 

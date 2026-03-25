@@ -67,10 +67,21 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 8. Settings Table (Key/Value)
+-- Used by the CMS Settings page & API
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE TABLE IF NOT EXISTS settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key text UNIQUE NOT NULL,
+  value text,
+  updated_at timestamptz DEFAULT now()
+);
+
 -- Enable RLS (Row Level Security) - Minimal setup for university project simplicity
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow direct access for service role (used by Next.js backend)
 -- In a real production app, you'd add fine-grained policies here
@@ -80,3 +91,4 @@ CREATE POLICY "Allow all to service role" ON certificates FOR ALL USING (true);
 CREATE POLICY "Allow all to service role" ON templates FOR ALL USING (true);
 CREATE POLICY "Allow all to service role" ON institutions FOR ALL USING (true);
 CREATE POLICY "Allow all to service role" ON audit_logs FOR ALL USING (true);
+CREATE POLICY "Allow all to service role" ON settings FOR ALL USING (true);

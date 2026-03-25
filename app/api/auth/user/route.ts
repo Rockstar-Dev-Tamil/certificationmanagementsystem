@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
+import { getAuthUser, getProfileByUserId } from '@/lib/security';
 
 export async function GET() {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get('token')?.value;
-
-        if (!token) {
+        const decoded = await getAuthUser();
+        if (!decoded) {
             return NextResponse.json({ user: null });
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
-        return NextResponse.json({ user: decoded });
-
-    } catch (err) {
+        const profile = await getProfileByUserId(decoded.userId);
+        return NextResponse.json({
+            user: {
+                ...decoded,
+                full_name: profile?.full_name ?? null,
+                profile_id: profile?.id ?? null,
+                is_blocked: profile?.is_blocked ?? false,
+            }
+        });
+    } catch {
         return NextResponse.json({ user: null });
     }
 }

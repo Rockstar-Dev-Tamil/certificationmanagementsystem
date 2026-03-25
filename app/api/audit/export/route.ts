@@ -17,13 +17,14 @@ export async function GET() {
         if (error) throw error;
 
         // Generate CSV
-        const headers = ['ID', 'Action', 'Target ID', 'Timestamp', 'Metadata'];
+        const headers = ['ID', 'Action', 'Actor', 'Target ID', 'Timestamp', 'Details'];
         const csvRows = audits.map(row => [
             row.id,
             row.action,
+            row.performed_by || '',
             row.target_id || 'System',
             new Date(row.created_at).toISOString(),
-            JSON.stringify(row.metadata || {}).replace(/"/g, '""') // Escape quotes for CSV
+            JSON.stringify(row.details || {}).replace(/"/g, '""') // Escape quotes for CSV
         ]);
 
         const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");

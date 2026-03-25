@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "class", // opt-in only; nothing auto-switches
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,40 +11,50 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: '#f0f7ff',
-          100: '#e0effe',
-          200: '#bae0fd',
-          300: '#7cc7fb',
-          400: '#38aaf7',
-          500: '#0e8ee9',
-          600: '#0270c7',
-          700: '#0359a1',
-          800: '#074c85',
-          900: '#0c406e',
-          950: '#082949',
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#94A3B8',
+          400: '#64748B',
+          500: '#4F46E5', // Institutional Indigo
+          600: '#2563EB', // Trust Blue
+          700: '#1D4ED8',
+          800: '#1E40AF',
+          900: '#0F172A', // Deep Slate
         },
-        accent: {
-          emerald: '#10b981',
-          violet: '#8b5cf6',
-          rose: '#f43f5e',
+        status: {
+          success: '#10B981',
+          danger: '#EF4444',
+          warning: '#F59E0B',
+          info: '#3B82F6',
         }
       },
-      borderRadius: {
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+      fontFamily: {
+        sans: ['Geist', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['Geist Mono', 'JetBrains Mono', 'monospace'],
+      },
+      boxShadow: {
+        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'premium': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-out forwards',
-        'float': 'float 3s ease-in-out infinite',
+        'fade-up': 'fadeUp 0.3s ease-out forwards',
+        'stagger-fade': 'staggerFade 0.4s ease-out forwards',
+        'shake': 'shake 0.3s ease-in-out',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
+        staggerFade: {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '25%': { transform: 'translateX(-4px)' },
+          '75%': { transform: 'translateX(4px)' },
         },
       },
     },
@@ -52,3 +62,4 @@ const config: Config = {
   plugins: [],
 };
 export default config;
+

@@ -51,6 +51,7 @@ export async function GET(req: Request) {
             date: new Date(row.issue_date).toLocaleDateString(),
             expiry: row.expiry_date ? new Date(row.expiry_date).toLocaleDateString() : 'N/A',
             recipient: user.role === 'admin' ? 'Recipient' : 'You',
+            status: row.status,
         }));
 
         return NextResponse.json(certificates);

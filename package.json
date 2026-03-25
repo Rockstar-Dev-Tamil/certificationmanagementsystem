@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "type-check": "tsc --noEmit",
+    "type-check": "next typegen && tsc --noEmit",
     "check-all": "npm run lint & npm run type-check & wait"
   },
   "dependencies": {

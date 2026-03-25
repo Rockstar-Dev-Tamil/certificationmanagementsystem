@@ -2,8 +2,47 @@ import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { serialize } from 'cookie';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
+
+export interface AuthTokenPayload {
+    userId: string;
+    email: string;
+    role: string;
+}
+
+export function createAuthToken(payload: AuthTokenPayload) {
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+}
+
+export function buildAuthCookie(token: string) {
+    return serialize('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+    });
+}
+
+export function buildLogoutCookie() {
+    return serialize('token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 0,
+        path: '/',
+    });
+}
+
+export function getBaseUrl() {
+    return (
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        'http://localhost:3000'
+    ).replace(/\/$/, '');
+}
 
 /**
  * RBAC Helper: Checks if a user has the required role
@@ -58,6 +97,53 @@ export async function signAndCommitToChain(certificateId: string, dataHash: stri
     }
 }
 
+export async function getProfileByUserId(userId: string) {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, is_blocked')
+        .eq('user_id', userId)
+        .single();
+
+    if (error) {
+        return null;
+    }
+
+    return data;
+}
+
+export async function getSettingsMap(keys?: string[]) {
+    let query = supabase.from('settings').select('key,value');
+    if (keys && keys.length > 0) {
+        query = query.in('key', keys);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+        return {};
+    }
+
+    return Object.fromEntries((data ?? []).map((row) => [row.key, row.value])) as Record<string, string | null>;
+}
+
+export async function logAudit(action: string, options?: { performedBy?: string | null; targetId?: string | null; details?: unknown }) {
+    const payload = {
+        action,
+        performed_by: options?.performedBy ?? null,
+        target_id: options?.targetId ?? null,
+        details:
+            typeof options?.details === 'string'
+                ? options.details
+                : options?.details === undefined
+                  ? null
+                  : JSON.stringify(options.details),
+    };
+
+    const { error } = await supabase.from('audit_logs').insert([payload]);
+    if (error) {
+        throw error;
+    }
+}
+
 /**
  * Auth Helper: Verifies the JWT token from cookies and returns the user payload
  */
@@ -68,8 +154,8 @@ export async function getAuthUser() {
 
         if (!token) return null;
 
-        return jwt.verify(token, JWT_SECRET) as any;
-    } catch (err) {
+        return jwt.verify(token, JWT_SECRET) as AuthTokenPayload;
+    } catch {
         return null;
     }
 }

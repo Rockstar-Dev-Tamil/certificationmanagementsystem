@@ -1,180 +1,313 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Upload, FileText, CheckCircle, XCircle, Loader2, ArrowLeft, Database, Search, ShieldCheck } from 'lucide-react';
+import * as React from "react";
+import { CheckCircle2, FileText, Upload, XCircle } from "lucide-react";
+
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/cn";
+import { useToast } from "@/components/ui/Toast";
+
+type Row = Record<string, string>;
+
+type MappingKey = "recipient_name" | "recipient_email" | "course_title" | "expiry_date";
+const mappingLabels: Record<MappingKey, string> = {
+  recipient_name: "Recipient Name",
+  recipient_email: "Email",
+  course_title: "Certificate Title",
+  expiry_date: "Expiry Date",
+};
+
+type BulkResult = { status: "success" | "failed"; email?: string; certificate_id?: string; error?: string };
+
+function parseCSV(text: string): { headers: string[]; rows: Row[] } {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return { headers: [], rows: [] };
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const rows = lines.slice(1).map((line) => {
+    const values = line.split(",").map((v) => v.trim());
+    const row: Row = {};
+    headers.forEach((h, i) => {
+      row[h] = values[i] ?? "";
+    });
+    return row;
+  });
+  return { headers, rows };
+}
 
 export default function BulkIssuePage() {
-    const router = useRouter();
-    const [file, setFile] = React.useState<File | null>(null);
-    const [loading, setLoading] = React.useState(false);
-    const [results, setResults] = React.useState<any[]>([]);
+  const { push } = useToast();
+  const [file, setFile] = React.useState<File | null>(null);
+  const [headers, setHeaders] = React.useState<string[]>([]);
+  const [rows, setRows] = React.useState<Row[]>([]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+  const [mapping, setMapping] = React.useState<Record<MappingKey, string>>({
+    recipient_name: "",
+    recipient_email: "",
+    course_title: "",
+    expiry_date: "",
+  });
+
+  const [processing, setProcessing] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
+  const [results, setResults] = React.useState<BulkResult[]>([]);
+
+  async function onPickFile(f: File) {
+    setFile(f);
+    setResults([]);
+    setProgress(0);
+    const text = await f.text();
+    const parsed = parseCSV(text);
+    setHeaders(parsed.headers);
+    setRows(parsed.rows);
+    setMapping((prev) => ({
+      ...prev,
+      recipient_name: parsed.headers.find((h) => /name/i.test(h)) ?? parsed.headers[0] ?? "",
+      recipient_email: parsed.headers.find((h) => /email/i.test(h)) ?? parsed.headers[1] ?? "",
+      course_title: parsed.headers.find((h) => /title|course/i.test(h)) ?? parsed.headers[2] ?? "",
+      expiry_date: parsed.headers.find((h) => /expiry|expire/i.test(h)) ?? parsed.headers[3] ?? "",
+    }));
+  }
+
+  const canProcess =
+    rows.length > 0 && mapping.recipient_name && mapping.recipient_email && mapping.course_title;
+
+  async function process() {
+    if (!canProcess) {
+      push({ type: "error", message: "Map required fields before issuing." });
+      return;
+    }
+    setProcessing(true);
+    setResults([]);
+    setProgress(10);
+
+    const interval = window.setInterval(() => {
+      setProgress((p) => (p < 90 ? p + 3 : p));
+    }, 250);
+
+    try {
+      const certificates = rows.map((r) => ({
+        recipient_name: r[mapping.recipient_name] ?? "",
+        recipient_email: r[mapping.recipient_email] ?? "",
+        course_title: r[mapping.course_title] ?? "",
+        expiry_date: mapping.expiry_date ? (r[mapping.expiry_date] ?? null) : null,
+      }));
+
+      const res = await fetch("/api/issue/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ certificates }),
+      });
+      const data: any = await res.json();
+      if (!res.ok) {
+        push({ type: "error", message: data?.error ?? "Bulk issue failed." });
+        return;
+      }
+      setResults(Array.isArray(data.results) ? (data.results as BulkResult[]) : []);
+      push({ type: "success", message: "Bulk issuing completed." });
+      setProgress(100);
+    } catch {
+      push({ type: "error", message: "Network error during bulk issue." });
+    } finally {
+      window.clearInterval(interval);
+      setProcessing(false);
+      setTimeout(() => setProgress(0), 1200);
+    }
+  }
+
+  const previewColumns: Array<DataTableColumn<Row>> = [
+    ...headers.slice(0, 4).map((h) => ({
+      key: h,
+      header: h,
+      sortable: true,
+      render: (r: Row) => <span className="text-sm text-[var(--text-secondary)]">{r[h]}</span>,
+      searchText: (r: Row) => r[h],
+    })),
+  ];
+
+  const resultColumns: Array<DataTableColumn<BulkResult>> = [
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      render: (r) =>
+        r.status === "success" ? (
+          <Badge variant="success">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Success
+          </Badge>
+        ) : (
+          <Badge variant="danger">
+            <XCircle className="h-3.5 w-3.5" /> Failed
+          </Badge>
+        ),
+      searchText: (r) => r.status,
+    },
+    {
+      key: "email",
+      header: "Email",
+      sortable: true,
+      render: (r) => <span className="text-sm">{r.email ?? "—"}</span>,
+      searchText: (r) => r.email ?? "",
+    },
+    {
+      key: "certificate_id",
+      header: "Certificate ID",
+      sortable: true,
+      render: (r) => (
+        <span className="font-mono text-xs text-[var(--text-primary)]">{r.certificate_id ?? "—"}</span>
+      ),
+      searchText: (r) => r.certificate_id ?? "",
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title="Bulk issue"
+        subtitle="Upload a CSV, map columns, preview rows, then issue in one operation."
+        action={
+          <Button onClick={process} isLoading={processing} disabled={!canProcess}>
+            Issue batch
+          </Button>
         }
-    };
+      />
 
-    const processCSV = async () => {
-        if (!file) return;
-        setLoading(true);
-        setResults([]);
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const text = e.target?.result as string;
-            const lines = text.split('\n');
-            // const headers = lines[0].split(','); // Unused but kept for logic
-
-            const certificates = lines.slice(1).filter(line => line.trim()).map(line => {
-                const values = line.split(',');
-                return {
-                    recipient_name: values[0]?.trim(),
-                    recipient_email: values[1]?.trim(),
-                    course_title: values[2]?.trim(),
-                    expiry_date: values[3]?.trim() || null
-                };
-            });
-
-            try {
-                const res = await fetch('/api/issue/bulk', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ certificates })
-                });
-                const data = await res.json();
-                if (data.results) {
-                    setResults(data.results);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('An error occurred during bulk processing.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        reader.readAsText(file);
-    };
-
-    return (
-        <div className="min-h-screen bg-white selection:bg-brand-100">
-            <div className="max-w-5xl mx-auto px-6 py-12 lg:py-20">
-                <button
-                    onClick={() => router.back()}
-                    className="mb-12 flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-xs uppercase tracking-widest transition-all group"
+      <div className="px-6 py-6 space-y-6">
+        <div className="grid gap-6 lg:grid-cols-12">
+          <div className="lg:col-span-7 space-y-6">
+            <Card className="p-6">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">Upload CSV</div>
+              <div className="mt-4">
+                <div
+                  className={cn(
+                    "relative flex flex-col items-center justify-center rounded-[var(--radius)] border-2 border-dashed p-10 text-center transition",
+                    "border-[var(--border)] bg-white hover:bg-slate-50 hover:border-slate-300",
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) void onPickFile(f);
+                  }}
                 >
-                    <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                    Return to Console
-                </button>
-
-                <div className="grid lg:grid-cols-5 gap-16 items-start">
-                    <div className="lg:col-span-2 space-y-10">
-                        <div className="animate-fade-in-up">
-                            <div className="inline-flex items-center px-3 py-1 bg-violet-50 text-violet-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 italic">Mass Operation</div>
-                            <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight mb-6">Bulk Asset <br />Deployment.</h2>
-                            <p className="text-slate-500 font-medium leading-relaxed">
-                                Deploy multiple credentials in a single operation. Ensure your CSV follows the standardized protocol format.
-                            </p>
-                        </div>
-
-                        <div className="glass-card p-8 bg-slate-50 border-slate-100 rounded-[2.5rem]">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 italic leading-none">Format Protocol (CSV)</h4>
-                            <div className="space-y-4">
-                                <div className="bg-white p-4 rounded-xl border border-slate-100 font-mono text-[10px] text-slate-600 space-y-1">
-                                    <p className="text-slate-300"># recipient_name, email, title, expiry</p>
-                                    <p>John Doe, john@node.edu, Web Dev, 2027-01-31</p>
-                                    <p>Jane Smith, jane@node.edu, Python, 2026-12-31</p>
-                                </div>
-                                <div className="flex items-center gap-3 text-[10px] font-black text-violet-600 uppercase italic">
-                                    <Database className="h-3 w-3" />
-                                    <span>Supports up to 500 records</span>
-                                </div>
-                            </div>
-                        </div>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void onPickFile(f);
+                    }}
+                  />
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-light)] text-[var(--accent)]">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <div className="mt-4 text-sm font-semibold text-[var(--text-primary)]">
+                    Drag & drop your CSV here
+                  </div>
+                  <div className="mt-1 text-sm text-[var(--text-secondary)]">
+                    or click to browse.
+                  </div>
+                  {file ? (
+                    <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs text-[var(--text-secondary)]">
+                      <FileText className="h-3.5 w-3.5 text-slate-400" />
+                      {file.name}
                     </div>
-
-                    <div className="lg:col-span-3">
-                        <div className="glass-card p-1 pb-12 rounded-[3.5rem] bg-white border border-slate-100 shadow-3xl shadow-slate-100 text-center overflow-hidden">
-                            <div className="p-12 md:p-16 border-b border-slate-50/50 mb-10 bg-slate-50/30">
-                                <div className="relative group mx-auto w-full max-w-sm">
-                                    <input
-                                        type="file"
-                                        accept=".csv"
-                                        onChange={handleFileChange}
-                                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                                    />
-                                    <div className="border-2 border-dashed border-slate-200 rounded-[2.5rem] p-12 text-center group-hover:border-brand-400 group-hover:bg-white transition-all duration-500 relative bg-white/50 backdrop-blur-sm shadow-inner overflow-hidden">
-                                        {file ? (
-                                            <div className="flex flex-col items-center animate-fade-in">
-                                                <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-100">
-                                                    <FileText className="h-8 w-8 text-brand-600" />
-                                                </div>
-                                                <p className="font-black text-slate-900 tracking-tight mb-1 truncate w-full">{file.name}</p>
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{(file.size / 1024).toFixed(2)} KB</p>
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                                                    <Upload className="h-8 w-8 text-slate-300 group-hover:text-brand-400" />
-                                                </div>
-                                                <p className="font-black text-slate-900 tracking-tight mb-1">Select Protocol File</p>
-                                                <p className="text-[11px] font-bold text-slate-400 italic">Drag and drop or click to ingest</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="mt-10">
-                                    <button
-                                        onClick={processCSV}
-                                        disabled={!file || loading}
-                                        className="w-full max-w-xs bg-slate-900 text-white px-12 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all disabled:bg-slate-100 disabled:text-slate-300 shadow-2xl shadow-slate-200 flex items-center justify-center gap-4 active:scale-[0.98] group mx-auto"
-                                    >
-                                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                                            <>
-                                                Execute Issuance
-                                                <ShieldCheck className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {results.length > 0 && (
-                                <div className="px-12 text-left animate-fade-in-up">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 italic flex items-center gap-3">
-                                        <Search className="h-3 w-3" />
-                                        Deployment Intelligence Report
-                                    </h3>
-                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-100">
-                                        {results.map((res, i) => (
-                                            <div key={i} className={`flex items-center justify-between p-5 rounded-2xl border transition-all hover:translate-x-1 ${res.status === 'success' ? 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200' : 'bg-rose-50/50 border-rose-100 hover:border-rose-200'}`}>
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${res.status === 'success' ? 'bg-emerald-500 shadow-emerald-100' : 'bg-rose-500 shadow-rose-100'} shadow-lg`}>
-                                                        {res.status === 'success' ? (
-                                                            <CheckCircle className="h-4 w-4 text-white" />
-                                                        ) : (
-                                                            <XCircle className="h-4 w-4 text-white" />
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-black text-slate-900 leading-none mb-1 uppercase italic tracking-tight">{res.email}</p>
-                                                        <p className={`text-[9px] font-bold ${res.status === 'success' ? 'text-emerald-600' : 'text-rose-600'} uppercase tracking-widest`}>{res.status === 'success' ? 'Ingested' : 'Rejected'}</p>
-                                                    </div>
-                                                </div>
-                                                <span className="font-mono text-[10px] font-black text-slate-400 bg-white/50 px-3 py-1.5 rounded-lg border border-slate-100">{res.certificate_id || 'ERROR-001'}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                  ) : null}
                 </div>
-            </div>
+              </div>
 
-            <div className="fixed bottom-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] pointer-events-none -z-10"></div>
+              {progress > 0 ? (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                    <span>Processing</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--accent)] transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </Card>
+
+            <Card className="p-6">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">Preview</div>
+              <div className="mt-4">
+                <DataTable
+                  columns={previewColumns}
+                  data={rows.slice(0, 25)}
+                  searchable
+                  searchPlaceholder="Search preview rows…"
+                  emptyTitle="No rows to preview"
+                  emptyDescription="Upload a CSV to see parsed rows here."
+                />
+              </div>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-5 space-y-6">
+            <Card className="p-6">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">Field mapping</div>
+              <div className="mt-2 text-sm text-[var(--text-secondary)]">
+                Map CSV columns to required fields.
+              </div>
+              <div className="mt-5 space-y-4">
+                {(Object.keys(mappingLabels) as MappingKey[]).map((k) => (
+                  <div key={k} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-[var(--text-secondary)]">
+                        {mappingLabels[k]}
+                      </div>
+                      {k !== "expiry_date" ? <Badge variant="neutral">Required</Badge> : <Badge variant="info">Optional</Badge>}
+                    </div>
+                    <select
+                      className="focus-ring h-11 w-full rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 text-sm"
+                      value={mapping[k]}
+                      onChange={(e) => setMapping((p) => ({ ...p, [k]: e.target.value }))}
+                    >
+                      <option value="">Select column…</option>
+                      {headers.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6">
+                <Button className="w-full" onClick={process} isLoading={processing} disabled={!canProcess}>
+                  Issue batch
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">Results</div>
+              <div className="mt-4">
+                <DataTable
+                  columns={resultColumns}
+                  data={results}
+                  searchable
+                  searchPlaceholder="Search results…"
+                  emptyTitle="No results yet"
+                  emptyDescription="Run the batch to see per-row outcomes."
+                />
+              </div>
+            </Card>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
