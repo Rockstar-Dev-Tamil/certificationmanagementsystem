@@ -29,7 +29,8 @@ export default function LoginPage() {
         setError(data.error || 'Invalid credentials. Please try again.');
         return;
       }
-      router.push('/dashboard');
+      const dest = data?.user?.role === 'admin' ? '/admin' : '/dashboard';
+      router.push(dest);
       router.refresh();
     } catch {
       setError('System communication failure. Please retry.');

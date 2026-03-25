@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Camera, Search, ChevronRight, ShieldCheck, HelpCircle } from "lucide-react";
-import { useSearchParams } from 'next/navigation';
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -13,7 +12,6 @@ type VerifyResponse =
   | { valid: false; status?: string; revocation_reason?: string; error?: string };
 
 export default function VerifyPage() {
-  const searchParams = useSearchParams();
   const [certificateId, setCertificateId] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<VerifyResponse | null>(null);
@@ -38,11 +36,11 @@ export default function VerifyPage() {
   }, [certificateId]);
 
   React.useEffect(() => {
-    const id = searchParams.get('id');
+    const id = new URLSearchParams(window.location.search).get('id');
     if (!id || id === certificateId) return;
     setCertificateId(id);
     void handleVerify(id);
-  }, [certificateId, handleVerify, searchParams]);
+  }, [certificateId, handleVerify]);
 
   React.useEffect(() => {
     if (!showScanner) return;

@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "fallback-secret-for-dev-only"
+);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,12 +22,8 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || "fallback-secret-for-dev-only";
-    const decoded = jwt.verify(token, secret) as unknown;
-    const role =
-      decoded && typeof decoded === "object" && "role" in decoded
-        ? String((decoded as any).role)
-        : "";
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const role = typeof payload.role === "string" ? payload.role : "";
 
     if (pathname.startsWith("/admin") && role !== "admin") {
       const url = request.nextUrl.clone();

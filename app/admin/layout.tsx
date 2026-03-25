@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-slate-50/10">
       <div className="hidden lg:block">
-        <Sidebar user={{ name: user?.full_name || user?.name, email: user?.email }} />
+        <Sidebar user={{ name: user?.full_name || user?.name, email: user?.email, role: user?.role }} />
       </div>
       <div className="lg:pl-[260px]">
         <Header />

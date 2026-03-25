@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "type-check": "next typegen && tsc --noEmit",
+    "type-check": "tsc -p tsconfig.typecheck.json --noEmit",
     "check-all": "npm run lint & npm run type-check & wait"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
+    "jose": "^6.2.2",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.563.0",

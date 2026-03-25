@@ -1,0 +1,47 @@
+{
+  "users": [
+    {
+      "id": "dev-admin-id",
+      "email": "admin@certisafe.local",
+      "password_hash": "$2b$12$uiY7SWH1.SJ3nW3kza1DFewx9PDuTt9foPrbQLnFvoA7l/4N4kepa",
+      "role": "admin",
+      "created_at": "2026-03-20T11:55:00Z"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "dev-profile-id",
+      "user_id": "dev-admin-id",
+      "full_name": "Developer Admin",
+      "email": "admin@certisafe.local",
+      "is_blocked": false,
+      "created_at": "2026-03-20T11:55:00Z"
+    }
+  ],
+  "institutions": [
+    {
+      "id": "dev-inst-id",
+      "name": "CertiSafe University",
+      "domain": "certisafe.local"
+    }
+  ],
+  "templates": [
+    {
+      "id": "dev-temp-id",
+      "institution_id": "dev-inst-id",
+      "title": "Professional Blockchain Certification",
+      "description": "Standard institutional credential template."
+    }
+  ],
+  "certificates": [],
+  "audit_logs": [
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-25T10:56:35.175Z"
+    }
+  ],
+  "settings": []
+}

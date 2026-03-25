@@ -5,7 +5,7 @@ import { Plus, Search, Award, TrendingUp, Filter, RefreshCcw, MoreHorizontal, Ey
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 export default function AdminPage() {
-  const [stats, setStats] = React.useState({ total: 0, today: 0, recent: [] });
+  const [stats, setStats] = React.useState<any>({ total: 0, today: 0, templates: 0, profiles: 0, recent: [], trend: [] });
   const [loading, setLoading] = React.useState(true);
 
   const handleRevoke = async (id: string) => {
@@ -73,8 +73,8 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
           {[
             { label: "Total Assets Issued", value: stats.total.toString(), color: "bg-brand-600", icon: Award },
-            { label: "Active Frameworks", value: "3", color: "bg-violet-600", icon: ShieldCheck },
-            { label: "Compliance Audits", value: "24", color: "bg-amber-500", icon: UserCheck },
+            { label: "Active Frameworks", value: (stats.templates || 0).toString(), color: "bg-violet-600", icon: ShieldCheck },
+            { label: "Unique Holders", value: (stats.profiles || 0).toString(), color: "bg-amber-500", icon: UserCheck },
             { label: "Real-time Traffic", value: stats.today.toString(), color: "bg-emerald-500", icon: TrendingUp }
           ].map((stat, i) => (
             <div key={i} className="glass-card p-10 rounded-[2.5rem] bg-white border-transparent hover:border-brand-100 transition-all group relative overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 duration-500">
@@ -196,7 +196,7 @@ export default function AdminPage() {
                 ) : stats.recent.length === 0 ? (
                   <tr><td colSpan={6} className="px-10 py-20 text-center text-slate-400 font-bold italic tracking-tighter">THE LEDGER IS VACANT. AWAITING INITIAL ISSUANCE.</td></tr>
                 ) : (
-                  stats.recent.map((row: any, i) => (
+                  stats.recent.map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-brand-50/20 transition-all group duration-300">
                       <td className="px-10 py-6 text-slate-400 text-[10px] font-black group-hover:text-brand-600 transition-colors tracking-tighter">{row.certificate_id}</td>
                       <td className="px-10 py-6">

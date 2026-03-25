@@ -16,6 +16,7 @@ export async function GET() {
                 id,
                 full_name,
                 email,
+                is_blocked,
                 created_at,
                 certificates:certificates(count)
             `)
@@ -27,6 +28,7 @@ export async function GET() {
             id: p.id,
             full_name: p.full_name,
             email: p.email,
+            is_blocked: p.is_blocked ?? false,
             created_at: p.created_at,
             issuance_count: p.certificates ? (p.certificates[0] as any).count : 0
         }));

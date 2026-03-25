@@ -18,13 +18,20 @@ export async function GET() {
 
         // Generate CSV
         const headers = ['ID', 'Action', 'Actor', 'Target ID', 'Timestamp', 'Details'];
+        const escapeCSV = (val: unknown) => {
+            const str = String(val ?? '');
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
         const csvRows = audits.map(row => [
-            row.id,
-            row.action,
-            row.performed_by || '',
-            row.target_id || 'System',
-            new Date(row.created_at).toISOString(),
-            JSON.stringify(row.details || {}).replace(/"/g, '""') // Escape quotes for CSV
+            escapeCSV(row.id),
+            escapeCSV(row.action),
+            escapeCSV(row.performed_by || ''),
+            escapeCSV(row.target_id || 'System'),
+            escapeCSV(new Date(row.created_at).toISOString()),
+            escapeCSV(JSON.stringify(row.details || {}))
         ]);
 
         const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");

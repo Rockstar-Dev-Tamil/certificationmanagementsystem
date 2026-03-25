@@ -37,7 +37,7 @@ export default function RegisterPage() {
         setError(data.error || 'Registration failed. Please check inputs.');
         return;
       }
-      router.push(data?.user?.role === 'admin' ? '/dashboard' : '/user');
+      router.push(data?.user?.role === 'admin' ? '/admin' : '/dashboard');
       router.refresh();
     } catch {
       setError('System communication failure. Please retry.');
