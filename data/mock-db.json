@@ -3,8 +3,15 @@
     {
       "id": "dev-admin-id",
       "email": "admin@certisafe.local",
-      "password_hash": "$2b$12$uiY7SWH1.SJ3nW3kza1DFewx9PDuTt9foPrbQLnFvoA7l/4N4kepa",
+      "password_hash": "$2b$10$Sz89S530OpSE3CEMcdZy..uZ3euT2w7yeELUYObeLe8pMRc/GyIVK",
       "role": "admin",
+      "created_at": "2026-03-20T11:55:00Z"
+    },
+    {
+      "id": "dev-user-id",
+      "email": "user@certisafe.local",
+      "password_hash": "$2b$10$LO986bOJHBCUmBUAG7Fq3.s//rt3B1Uu1V0apuQIrSh3V1Kg/99.i",
+      "role": "user",
       "created_at": "2026-03-20T11:55:00Z"
     }
   ],
@@ -16,6 +23,26 @@
       "email": "admin@certisafe.local",
       "is_blocked": false,
       "created_at": "2026-03-20T11:55:00Z"
+    },
+    {
+      "id": "488703ad-db1a-4049-a97e-05dd2a4f6354",
+      "full_name": "Jayabalaji",
+      "email": "jayabalaji@gmail.com",
+      "created_at": "2026-03-26T03:27:21.351Z"
+    },
+    {
+      "id": "dev-user-profile-id",
+      "user_id": "dev-user-id",
+      "full_name": "Standard User",
+      "email": "user@certisafe.local",
+      "is_blocked": false,
+      "created_at": "2026-03-20T11:55:00Z"
+    },
+    {
+      "id": "7d09d0e6-a8b8-449f-9594-40035adcbad4",
+      "full_name": "Jayabalaji",
+      "email": "ytrockstar51@gmail.com",
+      "created_at": "2026-03-26T03:38:16.775Z"
     }
   ],
   "institutions": [
@@ -31,9 +58,67 @@
       "institution_id": "dev-inst-id",
       "title": "Professional Blockchain Certification",
       "description": "Standard institutional credential template."
+    },
+    {
+      "id": "96b75a92-3b7c-4a0f-9fb3-b890fb60cb74",
+      "title": "Advanced DBMS",
+      "description": "Auto-generated template",
+      "created_at": "2026-03-26T03:27:21.355Z"
     }
   ],
-  "certificates": [],
+  "certificates": [
+    {
+      "id": "ce126784-bf23-45c9-ad54-43bc3919a508",
+      "certificate_id": "CS-2026-ADVA-641358",
+      "user_id": "488703ad-db1a-4049-a97e-05dd2a4f6354",
+      "template_id": "96b75a92-3b7c-4a0f-9fb3-b890fb60cb74",
+      "issue_date": "2026-03-26T03:27:21.342Z",
+      "expiry_date": null,
+      "qr_code": "data:image/png;base64,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",
+      "data_hash": "6bfe36188a4c6367d60205abcc3c6aede20c8e74c306319b1cb39a0402bd4120",
+      "status": "revoked",
+      "created_at": "2026-03-26T03:27:21.436Z",
+      "revocation_reason": "11"
+    },
+    {
+      "id": "43dc1d63-5e0f-4bec-b510-d54a31eb615c",
+      "certificate_id": "CS-2026-PROF-296778",
+      "user_id": "7d09d0e6-a8b8-449f-9594-40035adcbad4",
+      "template_id": "dev-temp-id",
+      "issue_date": "2026-03-26T00:00:00.000Z",
+      "expiry_date": "2029-02-28T00:00:00.000Z",
+      "qr_code": "data:image/png;base64,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",
+      "data_hash": "439fe93757fd2e828af922fa3357d88029ab2347c6d45108d67da297f2fa24ca",
+      "status": "revoked",
+      "created_at": "2026-03-26T03:38:16.845Z",
+      "revocation_reason": "11"
+    },
+    {
+      "id": "b688a40a-0e9e-488d-963f-e402f958bb9e",
+      "certificate_id": "CS-2026-PROF-400938",
+      "user_id": "dev-user-profile-id",
+      "template_id": "dev-temp-id",
+      "issue_date": "2026-03-26T00:00:00.000Z",
+      "expiry_date": "2026-03-28T00:00:00.000Z",
+      "qr_code": "data:image/png;base64,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",
+      "data_hash": "712d1c0a36c56c3c501d186ef29d46d1999496961461fe9de1999716a9311d23",
+      "status": "revoked",
+      "created_at": "2026-03-26T03:40:00.980Z",
+      "revocation_reason": "11"
+    },
+    {
+      "id": "de1a8298-82df-43a8-afd1-981ec9d4e20b",
+      "certificate_id": "CS-2026-ADVA-081574",
+      "user_id": "dev-user-profile-id",
+      "template_id": "96b75a92-3b7c-4a0f-9fb3-b890fb60cb74",
+      "issue_date": "2026-03-26T00:00:00.000Z",
+      "expiry_date": "2026-03-28T00:00:00.000Z",
+      "qr_code": "data:image/png;base64,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",
+      "data_hash": "2e647ffb56e0f81606231075106b9a9cd781eaf8daa9ebc91c7f3bef4804cdf5",
+      "status": "valid",
+      "created_at": "2026-03-26T04:08:01.635Z"
+    }
+  ],
   "audit_logs": [
     {
       "action": "LOGIN",
@@ -41,6 +126,170 @@
       "target_id": "dev-admin-id",
       "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
       "created_at": "2026-03-25T10:56:35.175Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:21:17.384Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:24:14.929Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:24:20.732Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:25:21.618Z"
+    },
+    {
+      "action": "BLOCKCHAIN_COMMIT_SIM",
+      "target_id": "CS-2026-ADVA-641358",
+      "details": "{\"tx_hash\":\"1eef6114959ab4796a2af4cef36cd4816ccbd21acc515ccb88f20b9d1595b065\",\"signing_signature\":\"cf3934daeba114017df0c1035c4e0d9afcacb3db17a2b26ae052222fcd5a7ee2\",\"network\":\"CertiSafe-L2-Simulated\"}",
+      "created_at": "2026-03-26T03:27:21.444Z"
+    },
+    {
+      "action": "ISSUE_CERTIFICATE",
+      "performed_by": "dev-profile-id",
+      "target_id": "CS-2026-ADVA-641358",
+      "details": "{\"recipient_email\":\"jayabalaji@gmail.com\",\"recipient_name\":\"Jayabalaji\",\"course_title\":\"Advanced DBMS\",\"template_id\":\"96b75a92-3b7c-4a0f-9fb3-b890fb60cb74\",\"issue_date\":\"2026-03-26T03:27:21.342Z\",\"expiry_date\":null}",
+      "created_at": "2026-03-26T03:27:21.448Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-user-profile-id",
+      "target_id": "dev-user-id",
+      "details": "{\"email\":\"user@certisafe.local\",\"role\":\"user\"}",
+      "created_at": "2026-03-26T03:28:48.635Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-user-profile-id",
+      "target_id": "dev-user-id",
+      "details": "{\"email\":\"user@certisafe.local\",\"role\":\"user\"}",
+      "created_at": "2026-03-26T03:29:45.191Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:31:13.233Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-user-profile-id",
+      "target_id": "dev-user-id",
+      "details": "{\"email\":\"user@certisafe.local\",\"role\":\"user\"}",
+      "created_at": "2026-03-26T03:32:59.300Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:34:16.247Z"
+    },
+    {
+      "action": "BLOCKCHAIN_COMMIT_SIM",
+      "target_id": "CS-2026-PROF-296778",
+      "details": "{\"tx_hash\":\"88872a484ccb07687aae3414d91db1f773c5df0ae655e2d5e41cad02dfb798ba\",\"signing_signature\":\"5d65a27bc69a84e9623eeca18268745fab5d29d25d757b60f6410daaa08d549a\",\"network\":\"CertiSafe-L2-Simulated\"}",
+      "created_at": "2026-03-26T03:38:16.851Z"
+    },
+    {
+      "action": "ISSUE_CERTIFICATE",
+      "performed_by": "dev-profile-id",
+      "target_id": "CS-2026-PROF-296778",
+      "details": "{\"recipient_email\":\"ytrockstar51@gmail.com\",\"recipient_name\":\"Jayabalaji\",\"course_title\":\"Professional Blockchain Certification\",\"template_id\":\"dev-temp-id\",\"issue_date\":\"2026-03-26T00:00:00.000Z\",\"expiry_date\":\"2029-02-28T00:00:00.000Z\"}",
+      "created_at": "2026-03-26T03:38:16.856Z"
+    },
+    {
+      "action": "BLOCKCHAIN_COMMIT_SIM",
+      "target_id": "CS-2026-PROF-400938",
+      "details": "{\"tx_hash\":\"b4c7bc690d6fbe6a2976f357a32c1983a4379384382052c16f6054d8b771ef17\",\"signing_signature\":\"10263fbe5677c463c909f41f5aed4e8e6769cb6c190d54b73ce215f910db65a9\",\"network\":\"CertiSafe-L2-Simulated\"}",
+      "created_at": "2026-03-26T03:40:00.984Z"
+    },
+    {
+      "action": "ISSUE_CERTIFICATE",
+      "performed_by": "dev-profile-id",
+      "target_id": "CS-2026-PROF-400938",
+      "details": "{\"recipient_email\":\"user@certisafe.local\",\"recipient_name\":\"Useer\",\"course_title\":\"Professional Blockchain Certification\",\"template_id\":\"dev-temp-id\",\"issue_date\":\"2026-03-26T00:00:00.000Z\",\"expiry_date\":\"2026-03-28T00:00:00.000Z\"}",
+      "created_at": "2026-03-26T03:40:00.986Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-user-profile-id",
+      "target_id": "dev-user-id",
+      "details": "{\"email\":\"user@certisafe.local\",\"role\":\"user\"}",
+      "created_at": "2026-03-26T03:41:04.532Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:42:35.441Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-user-profile-id",
+      "target_id": "dev-user-id",
+      "details": "{\"email\":\"user@certisafe.local\",\"role\":\"user\"}",
+      "created_at": "2026-03-26T03:48:15.029Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T03:48:58.046Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T04:04:53.862Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-profile-id",
+      "target_id": "dev-admin-id",
+      "details": "{\"email\":\"admin@certisafe.local\",\"role\":\"admin\"}",
+      "created_at": "2026-03-26T04:06:52.747Z"
+    },
+    {
+      "action": "BLOCKCHAIN_COMMIT_SIM",
+      "target_id": "CS-2026-ADVA-081574",
+      "details": "{\"tx_hash\":\"aa4225277170a67ec912be6ea0218099bc6fa8b020f9273d7ac99a8c15c00e4b\",\"signing_signature\":\"a821f90ea81b6e18c04026cf773308041b7a6bb6725a88d167e84c7da6135a21\",\"network\":\"CertiSafe-L2-Simulated\"}",
+      "created_at": "2026-03-26T04:08:01.641Z"
+    },
+    {
+      "action": "ISSUE_CERTIFICATE",
+      "performed_by": "dev-profile-id",
+      "target_id": "CS-2026-ADVA-081574",
+      "details": "{\"recipient_email\":\"user@certisafe.local\",\"recipient_name\":\"JB\",\"course_title\":\"Advanced DBMS\",\"template_id\":\"96b75a92-3b7c-4a0f-9fb3-b890fb60cb74\",\"issue_date\":\"2026-03-26T00:00:00.000Z\",\"expiry_date\":\"2026-03-28T00:00:00.000Z\"}",
+      "created_at": "2026-03-26T04:08:01.644Z"
+    },
+    {
+      "action": "LOGIN",
+      "performed_by": "dev-user-profile-id",
+      "target_id": "dev-user-id",
+      "details": "{\"email\":\"user@certisafe.local\",\"role\":\"user\"}",
+      "created_at": "2026-03-26T04:08:45.753Z"
     }
   ],
   "settings": []
