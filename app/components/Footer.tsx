@@ -61,7 +61,7 @@ export default function Footer() {
 
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/5 pt-12">
                     <p className="text-slate-600 font-black uppercase text-[10px] tracking-[0.3em]">
-                        © {new Date().getFullYear()} CertiSafe Enterprise. Deploy ID: VERCEL-NINE-X
+                        © {new Date().getFullYear()} CertiSafe Enterprise.
                     </p>
                     <div className="flex gap-8 text-slate-500 font-black text-[10px] uppercase tracking-[0.4em]">
                         <a href="#" className="hover:text-brand-600 transition-colors">Privacy</a>
