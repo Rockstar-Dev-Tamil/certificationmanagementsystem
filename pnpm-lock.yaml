@@ -32,6 +32,9 @@ importers:
       html5-qrcode:
         specifier: ^2.3.8
         version: 2.3.8
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -1007,6 +1010,9 @@ packages:
   jiti@1.21.7:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
+
+  jose@6.2.2:
+    resolution: {integrity: sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ==}
 
   jsonwebtoken@9.0.3:
     resolution: {integrity: sha512-MT/xP0CrubFRNLNKvxJ2BYfy53Zkm++5bX9dtuPbqAeQpTVe0MQTFhao8+Cp//EmJp244xt6Drw/GVEGCUj40g==}
@@ -2233,6 +2239,8 @@ snapshots:
   isexe@2.0.0: {}
 
   jiti@1.21.7: {}
+
+  jose@6.2.2: {}
 
   jsonwebtoken@9.0.3:
     dependencies:
